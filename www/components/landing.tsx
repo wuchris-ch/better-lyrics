@@ -440,7 +440,7 @@ export function Landing() {
         </section>
       </main>
       <footer className="flex flex-col items-center w-full gap-2 px-4 py-6 border-t sm:flex-row shrink-0 md:px-6">
-        <p className="text-xs text-gray-500 dark:text-gray-400">&copy; 2024 Better Lyrics. All rights reserved.</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">&copy; 2025 Better Lyrics. All rights reserved.</p>
         <nav className="flex gap-4 sm:ml-auto sm:gap-6">
           <Link
             href="https://better-lyrics-status.boidu.dev/"
@@ -459,10 +459,11 @@ export function Landing() {
           >
             Discord
           </Link>
-          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
-            Terms of Service
-          </Link>
-          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+          <Link
+            href="https://github.com/boidushya/better-lyrics/blob/master/PRIVACY.md"
+            className="text-xs hover:underline underline-offset-4"
+            prefetch={false}
+          >
             Privacy
           </Link>
           <Link href="https://boidu.dev" className="text-xs hover:underline underline-offset-4" prefetch={false}>
