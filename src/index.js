@@ -82,8 +82,8 @@ export async function modify() {
   );
 
   Settings.onAlbumArtEnabled(
-    () => (this.shouldInjectAlbumArt = true),
-    () => (this.shouldInjectAlbumArt = false)
+    () => (AppState.shouldInjectAlbumArt = true),
+    () => (AppState.shouldInjectAlbumArt = false)
   );
 }
 
