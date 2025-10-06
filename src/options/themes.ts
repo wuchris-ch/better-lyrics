@@ -1,4 +1,11 @@
-export default [
+interface Theme {
+  name: string;
+  author: string;
+  link?: string;
+  css: string;
+}
+
+const themes: Theme[] = [
   {
     name: "Spotlight",
     author: "BetterLyrics",
@@ -626,7 +633,7 @@ ytmusic-player-page[player-fullscreened] .song-media-controls.ytmusic-player {
       left: -6%;
       /*  background-attachment: fixed !important; */
       width: 110% !important;
-      height: 100% !important;
+      height: 100% !importan;
       background-repeat: no-repeat !important;
       background-size: cover !important;
       filter: saturate(var(--blyrics-background-saturate)) brightness(0.3)
@@ -806,3 +813,5 @@ ytmusic-player-page::before {
 }`,
   },
 ];
+
+export default themes;

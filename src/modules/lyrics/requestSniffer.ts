@@ -1,39 +1,37 @@
-/**
- * @typedef {object} Segment
- * @property {number} primaryVideoStartTimeMilliseconds
- * @property {number} counterpartVideoStartTimeMilliseconds
- * @property {number} durationMilliseconds
- */
-/** @typedef {object} SegmentMap
- * @property {Segment[]} segment
- */
+// @ts-nocheck
 
 import * as Utils from "../../core/utils";
 
-/**
- * @type {Map<string, string>}
- */
-const browseIdToVideoIdMap = new Map();
-/**
- *
- * @type {Map<string, {hasLyrics: boolean, lyrics: string, sourceText: string}>}
- */
-const videoIdToLyricsMap = new Map();
-/**
- *
- * @type {Map<string, {counterpartVideoId: string | null, segmentMap: SegmentMap | null}>}
- */
-const counterpartVideoIdMap = new Map();
+interface Segment {
+  primaryVideoStartTimeMilliseconds: number;
+  counterpartVideoStartTimeMilliseconds: number;
+  durationMilliseconds: number;
+}
 
-/**
- *
- * @type {Map<string, string|null>}
- */
-const videoIdToAlbumMap = new Map();
+export interface SegmentMap {
+  segment: Segment[];
+  reversed?: boolean;
+}
 
-let firstRequestMissedVideoId = null;
+export interface LyricsInfo {
+  hasLyrics: boolean;
+  lyrics: string;
+  sourceText: string;
+}
 
-function delay(ms) {
+interface CounterpartInfo {
+  counterpartVideoId: string | null;
+  segmentMap: SegmentMap | null;
+}
+
+const browseIdToVideoIdMap = new Map<string, string>();
+const videoIdToLyricsMap = new Map<string, LyricsInfo>();
+const counterpartVideoIdMap = new Map<string, CounterpartInfo>();
+const videoIdToAlbumMap = new Map<string, string | null>();
+
+let firstRequestMissedVideoId: string | null = null;
+
+function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -44,7 +42,7 @@ function delay(ms) {
  * @param maxRetries {number}
  * @return {Promise<{hasLyrics: boolean, lyrics: string, sourceText: string}>}
  */
-export async function getLyrics(videoId, maxRetries = 250) {
+export async function getLyrics(videoId: string, maxRetries = 250): Promise<LyricsInfo> {
   if (videoIdToLyricsMap.has(videoId)) {
     return videoIdToLyricsMap.get(videoId);
   } else {
@@ -79,7 +77,7 @@ export async function getLyrics(videoId, maxRetries = 250) {
  * @param maxCheckCount {number}
  * @return {Promise<{counterpartVideoId: (string | null), segmentMap: (SegmentMap | null)}>}
  */
-export async function getMatchingSong(videoId, maxCheckCount = 250) {
+export async function getMatchingSong(videoId: string, maxCheckCount = 250): Promise<CounterpartInfo | null> {
   if (counterpartVideoIdMap.has(videoId)) {
     return counterpartVideoIdMap.get(videoId);
   } else {
@@ -106,7 +104,7 @@ export async function getMatchingSong(videoId, maxCheckCount = 250) {
  * @param videoId {string}
  * @return {Promise<string | null | undefined>}
  */
-export async function getSongAlbum(videoId) {
+export async function getSongAlbum(videoId: string): Promise<string | null | undefined> {
   for (let i = 0; i < 250; i++) {
     if (videoIdToAlbumMap.has(videoId)) {
       return videoIdToAlbumMap.get(videoId);
@@ -116,13 +114,13 @@ export async function getSongAlbum(videoId) {
   Utils.log("Song album information didn't come in time for: ", videoId);
 }
 
-export function setupRequestSniffer() {
-  let url = new URL(window.location);
+export function setupRequestSniffer(): void {
+  let url = new URL(window.location.href);
   if (url.searchParams.has("v")) {
     firstRequestMissedVideoId = url.searchParams.get("v");
   }
 
-  document.addEventListener("blyrics-send-response", event => {
+  document.addEventListener("blyrics-send-response", (event: CustomEvent) => {
     let { /** @type string */ url, requestJson, responseJson} = event.detail;
     if (url.includes("https://music.youtube.com/youtubei/v1/next")) {
       let playlistPanelRendererContents =
@@ -154,7 +152,7 @@ export function setupRequestSniffer() {
             /**
              * @type {SegmentMap | null}
              */
-            let reversedSegmentMap = null;
+            let reversedSegmentMap: SegmentMap | null = null;
 
             if (segmentMap && segmentMap.segment) {
               for (let segment of segmentMap.segment) {

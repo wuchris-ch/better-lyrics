@@ -1,8 +1,9 @@
+// @ts-nocheck
 import CodeMirror from "codemirror/src/edit/CodeMirror";
 
-let saveTimeout;
-let editor;
-let currentThemeName = null;
+let saveTimeout: number;
+let editor: any;
+let currentThemeName: string | null = null;
 let isUserTyping = false;
 const SAVE_DEBOUNCE_DELAY = 1000;
 const VALID_CHANGE_ORIGINS = ["undo", "redo", "cut", "paste", "drag", "+delete", "+input", "setValue"];
@@ -11,11 +12,11 @@ const VALID_CHANGE_ORIGINS = ["undo", "redo", "cut", "paste", "drag", "+delete",
 const SYNC_STORAGE_LIMIT = 7000; // Leave some buffer under 8KB limit
 const MAX_RETRY_ATTEMPTS = 3;
 
-import THEMES from "./themes.js";
+import THEMES from "./themes";
 
 const invalidKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Shift", "Enter", "Tab"];
 
-const showAlert = message => {
+const showAlert = (message: string): void => {
   const status = document.getElementById("status-css");
   status.innerText = message;
   status.classList.add("active");
@@ -28,7 +29,7 @@ const showAlert = message => {
   }, 2000);
 };
 
-const openEditCSS = () => {
+const openEditCSS = (): void => {
   const editCSS = document.getElementById("css");
   const options = document.getElementById("themes-content");
 
@@ -38,7 +39,7 @@ const openEditCSS = () => {
 
 document.getElementById("edit-css-btn").addEventListener("click", openEditCSS);
 
-const openOptions = () => {
+const openOptions = (): void => {
   const editCSS = document.getElementById("css");
   const options = document.getElementById("themes-content");
 
@@ -50,7 +51,7 @@ document.getElementById("back-btn").addEventListener("click", openOptions);
 
 document.addEventListener("DOMContentLoaded", () => {
   const syncIndicator = document.getElementById("sync-indicator");
-  const themeSelector = document.getElementById("theme-selector");
+  const themeSelector = document.getElementById("theme-selector") as HTMLSelectElement;
 
   // Initialize CodeMirror
   editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
@@ -73,12 +74,12 @@ document.addEventListener("DOMContentLoaded", () => {
   editor.setSize(null, 300);
 
   // Enhanced storage management
-  const getStorageStrategy = css => {
+  const getStorageStrategy = (css: string): "local" | "sync" => {
     const cssSize = new Blob([css]).size;
     return cssSize > SYNC_STORAGE_LIMIT ? "local" : "sync";
   };
 
-  const saveToStorageWithFallback = async (css, isTheme = false, retryCount = 0) => {
+  const saveToStorageWithFallback = async (css: string, isTheme = false, retryCount = 0): Promise<{ success: boolean, strategy?: "local" | "sync", wasRetry?: boolean, error?: any }> => {
     try {
       const strategy = getStorageStrategy(css);
 
@@ -188,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function debounceSave() {
     syncIndicator.style.display = "block";
     clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(saveToStorage, SAVE_DEBOUNCE_DELAY);
+    saveTimeout = window.setTimeout(saveToStorage, SAVE_DEBOUNCE_DELAY);
   }
 
   editor.on("change", (_, changeObj) => {
@@ -205,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Enhanced loading function to check both storage types
-  const loadCustomCSS = async () => {
+  const loadCustomCSS = async (): Promise<string> => {
     try {
       // First check which storage type was used
       const syncData = await chrome.storage.sync.get(["cssStorageType", "customCSS"]);
@@ -251,17 +252,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load themes
   THEMES.forEach((theme, index) => {
     const option = document.createElement("option");
-    option.value = index;
+    option.value = index.toString();
     option.textContent = `${theme.name} by ${theme.author}`;
     themeSelector.appendChild(option);
   });
 
   // Enhanced theme and CSS loading
-  Promise.all([chrome.storage.sync.get(["themeName"]), loadCustomCSS()]).then(([syncData, css]) => {
+  Promise.all([chrome.storage.sync.get(["themeName"] as any), loadCustomCSS()]).then(([syncData, css]) => {
     if (syncData.themeName) {
       const themeIndex = THEMES.findIndex(theme => theme.name === syncData.themeName);
       if (themeIndex !== -1) {
-        themeSelector.value = themeIndex;
+        themeSelector.value = themeIndex.toString();
         currentThemeName = syncData.themeName;
       }
     }
@@ -300,13 +301,13 @@ ${selectedTheme.css}
 
 // Themes
 
-const generateDefaultFilename = () => {
+const generateDefaultFilename = (): string => {
   const date = new Date();
   const timestamp = date.toISOString().replace(/[:.]/g, "-").slice(0, -5);
   return `blyrics-theme-${timestamp}.css`;
 };
 
-const saveCSSToFile = (css, defaultFilename) => {
+const saveCSSToFile = (css: string, defaultFilename: string): void => {
   chrome.permissions.contains({permissions: ["downloads"]}, hasPermission => {
     if (hasPermission) {
       downloadFile(css, defaultFilename);
@@ -322,7 +323,7 @@ const saveCSSToFile = (css, defaultFilename) => {
   });
 };
 
-const downloadFile = (css, defaultFilename) => {
+const downloadFile = (css: string, defaultFilename: string): void => {
   const blob = new Blob([css], {type: "text/css"});
   const url = URL.createObjectURL(blob);
 
@@ -347,7 +348,7 @@ const downloadFile = (css, defaultFilename) => {
   }
 };
 
-const fallbackSaveMethod = (css, defaultFilename) => {
+const fallbackSaveMethod = (css: string, defaultFilename: string): void => {
   const blob = new Blob([css], {type: "text/css"});
   const url = URL.createObjectURL(blob);
 
@@ -364,7 +365,7 @@ const fallbackSaveMethod = (css, defaultFilename) => {
   showAlert("CSS file download initiated. Check your downloads folder.");
 };
 
-const loadCSSFromFile = file => {
+const loadCSSFromFile = (file: File): Promise<string | ArrayBuffer> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = event => {
@@ -381,11 +382,11 @@ document.getElementById("file-import-btn").addEventListener("click", () => {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".css";
-  input.onchange = event => {
-    const file = event.target.files[0];
+  input.onchange = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files[0];
     loadCSSFromFile(file)
       .then(css => {
-        editor.setValue(css);
+        editor.setValue(css as string);
         showAlert(`CSS file "${file.name}" imported!`);
       })
       .catch(err => {

@@ -1,15 +1,19 @@
 import * as Utils from "../../core/utils";
 import * as Constants from "../../core/constants";
 import * as Observer from "./observer";
-import {AppState} from "../../index";
+import { AppState } from "../../index";
+
+let backgroundChangeObserver: MutationObserver | null = null;
+let scrollPos = -1;
+let lyricsObserver: MutationObserver | null = null;
 
 /**
  * Creates or reuses the lyrics wrapper element and sets up scroll event handling.
  *
  * @returns {HTMLElement} The lyrics wrapper element
  */
-export function createLyricsWrapper() {
-  const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR);
+export function createLyricsWrapper(): HTMLElement {
+  const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR) as HTMLElement;
 
   tabRenderer.removeEventListener("scroll", Observer.scrollEventHandler);
   tabRenderer.addEventListener("scroll", Observer.scrollEventHandler);
@@ -32,10 +36,6 @@ export function createLyricsWrapper() {
 }
 
 /**
- * @param source : {string}
- * @param sourceHref : {string}
- */
-/**
  * Adds a footer with source attribution and action buttons to the lyrics container.
  *
  * @param {string} source - Source name for attribution
@@ -45,7 +45,7 @@ export function createLyricsWrapper() {
  * @param {string} album - Album name
  * @param {number} duration - Song duration in seconds
  */
-export function addFooter(source, sourceHref, song, artist, album, duration) {
+export function addFooter(source: string, sourceHref: string, song: string, artist: string, album: string, duration: number): void {
   if (document.getElementsByClassName(Constants.FOOTER_CLASS).length !== 0) {
     document.getElementsByClassName(Constants.FOOTER_CLASS)[0].remove();
   }
@@ -54,9 +54,9 @@ export function addFooter(source, sourceHref, song, artist, album, duration) {
   const footer = document.createElement("div");
   footer.classList.add(Constants.FOOTER_CLASS);
   lyricsElement.appendChild(footer);
-  this.createFooter(song, artist, album, duration);
+  createFooter(song, artist, album, duration);
 
-  const footerLink = document.getElementById("betterLyricsFooterLink");
+  const footerLink = document.getElementById("betterLyricsFooterLink") as HTMLAnchorElement;
   source = source || "boidu.dev";
   sourceHref = sourceHref || "https://better-lyrics.boidu.dev/";
   footerLink.textContent = source;
@@ -71,9 +71,9 @@ export function addFooter(source, sourceHref, song, artist, album, duration) {
  * @param {string} album - Album name
  * @param {number} duration - Song duration in seconds
  */
-export function createFooter(song, artist, album, duration) {
+export function createFooter(song: string, artist: string, album: string, duration: number): void {
   try {
-    const footer = document.getElementsByClassName(Constants.FOOTER_CLASS)[0];
+    const footer = document.getElementsByClassName(Constants.FOOTER_CLASS)[0] as HTMLElement;
     footer.innerHTML = "";
 
     const footerContainer = document.createElement("div");
@@ -115,7 +115,7 @@ export function createFooter(song, artist, album, duration) {
     if (song) url.searchParams.append("title", song);
     if (artist) url.searchParams.append("artist", artist);
     if (album) url.searchParams.append("album", album);
-    if (duration) url.searchParams.append("duration", duration);
+    if (duration) url.searchParams.append("duration", duration.toString());
     footerLink.target = "_blank";
     addLyricsLink.href = url.toString();
     addLyricsLink.textContent = "Add Lyrics to LRCLib";
@@ -140,14 +140,14 @@ let loaderMayBeActive = false;
 /**
  * Renders and displays the loading spinner for lyrics fetching.
  */
-export function renderLoader(small = false) {
+export function renderLoader(small = false): void {
     if (!small) {
-      this.cleanup();
+      cleanup();
     }
   loaderMayBeActive = true;
   try {
     clearTimeout(AppState.loaderAnimationEndTimeout);
-    const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR);
+    const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR) as HTMLElement;
     let loaderWrapper = document.getElementById(Constants.LYRICS_LOADER_ID);
     if (!loaderWrapper) {
       loaderWrapper = document.createElement("div");
@@ -182,7 +182,7 @@ export function renderLoader(small = false) {
 /**
  * Removes the loading spinner with animation and cleanup.
  */
-export function flushLoader(showNoSyncAvailable = false) {
+export function flushLoader(showNoSyncAvailable = false): void {
   try {
     const loaderWrapper = document.getElementById(Constants.LYRICS_LOADER_ID);
 
@@ -193,12 +193,12 @@ export function flushLoader(showNoSyncAvailable = false) {
       }
     if (loaderWrapper?.hasAttribute("active")) {
       clearTimeout(AppState.loaderAnimationEndTimeout);
-      loaderWrapper.dataset.animatingOut = true;
+      loaderWrapper.dataset.animatingOut = "true";
       loaderWrapper.removeAttribute("active");
 
-      loaderWrapper.addEventListener("transitionend", function handleTransitionEnd(_event) {
+      loaderWrapper.addEventListener("transitionend", function handleTransitionEnd(_event: TransitionEvent) {
         clearTimeout(AppState.loaderAnimationEndTimeout);
-        loaderWrapper.dataset.animatingOut = false;
+        loaderWrapper.dataset.animatingOut = "false";
         loaderMayBeActive = false;
         loaderWrapper.removeEventListener("transitionend", handleTransitionEnd);
         Utils.log(Constants.LOADER_TRANSITION_ENDED);
@@ -210,7 +210,7 @@ export function flushLoader(showNoSyncAvailable = false) {
           timeout += toMs(transitionDelay);
         }
 
-      AppState.loaderAnimationEndTimeout = setTimeout(() => {
+      AppState.loaderAnimationEndTimeout = window.setTimeout(() => {
         loaderWrapper.dataset.animatingOut = String(false);
         loaderMayBeActive = false;
         Utils.log(Constants.LOADER_ANIMATION_END_FAILED);
@@ -226,7 +226,7 @@ export function flushLoader(showNoSyncAvailable = false) {
  *
  * @returns {boolean} True if loader is active
  */
-export function isLoaderActive() {
+export function isLoaderActive(): boolean {
   try {
     if (!loaderMayBeActive) {
       return false;
@@ -244,7 +244,7 @@ export function isLoaderActive() {
 /**
  * Clears all lyrics content from the wrapper element.
  */
-export function clearLyrics() {
+export function clearLyrics(): void {
   try {
     const lyricsWrapper = document.getElementById(Constants.LYRICS_WRAPPER_ID);
     if (lyricsWrapper) {
@@ -255,40 +255,38 @@ export function clearLyrics() {
   }
 }
 
-/** @type {MutationObserver | null} */
-let backgroundChangeObserver = null;
-
 /**
  * Adds album art as a background image to the layout.
  * Sets up mutation observer to watch for art changes.
  *
  * @param {string} videoId - YouTube video ID for fallback image
  */
-export function addAlbumArtToLayout(videoId) {
+export function addAlbumArtToLayout(videoId: string): void {
   if (!videoId) return;
 
-  if (this.backgroundChangeObserver) {
-    this.backgroundChangeObserver.disconnect();
+  if (backgroundChangeObserver) {
+    backgroundChangeObserver.disconnect();
   }
 
-  const injectAlbumArt = () => {
+  const injectAlbumArtFn = () => {
+    const albumArt = document.querySelector(Constants.SONG_IMAGE_SELECTOR) as HTMLImageElement;
     if (albumArt.src.startsWith("data:image")) {
-      this.injectAlbumArt("https://img.youtube.com/vi/" + videoId + "/0.jpg");
+      injectAlbumArt("https://img.youtube.com/vi/" + videoId + "/0.jpg");
     } else {
-      this.injectAlbumArt(albumArt.src);
+      injectAlbumArt(albumArt.src);
     }
   };
 
-  const albumArt = document.querySelector(Constants.SONG_IMAGE_SELECTOR);
+  const albumArt = document.querySelector(Constants.SONG_IMAGE_SELECTOR) as HTMLImageElement;
   const observer = new MutationObserver(() => {
-    injectAlbumArt();
+    injectAlbumArtFn();
     Utils.log(Constants.ALBUM_ART_ADDED_FROM_MUTATION_LOG);
   });
 
   observer.observe(albumArt, {attributes: true});
-  this.backgroundChangeObserver = observer;
+  backgroundChangeObserver = observer;
 
-  injectAlbumArt();
+  injectAlbumArtFn();
   Utils.log(Constants.ALBUM_ART_ADDED_LOG);
 }
 
@@ -297,22 +295,22 @@ export function addAlbumArtToLayout(videoId) {
  *
  * @param {string} src - Image source URL
  */
-export function injectAlbumArt(src) {
+export function injectAlbumArt(src: string): void {
   const img = new Image();
   img.src = src;
 
   img.onload = () => {
-    document.getElementById("layout").style = `--blyrics-background-img: url('${src}')`;
+    (document.getElementById("layout") as HTMLElement).style.setProperty("--blyrics-background-img", `url('${src}')`);
   };
 }
 
 /**
  * Removes album art from layout and disconnects observers.
  */
-export function removeAlbumArtFromLayout() {
-  if (this.backgroundChangeObserver) {
-    this.backgroundChangeObserver.disconnect();
-    this.backgroundChangeObserver = null;
+export function removeAlbumArtFromLayout(): void {
+  if (backgroundChangeObserver) {
+    backgroundChangeObserver.disconnect();
+    backgroundChangeObserver = null;
   }
   const layout = document.getElementById("layout");
   if (layout) {
@@ -329,7 +327,7 @@ export function removeAlbumArtFromLayout() {
  * @param {string} album - Album name
  * @param {number} duration - Song duration in seconds
  */
-export function addNoLyricsButton(song, artist, album, duration) {
+export function addNoLyricsButton(song: string, artist: string, album: string, duration: number): void {
   const lyricsWrapper = document.getElementById(Constants.LYRICS_WRAPPER_ID);
   if (!lyricsWrapper) return;
 
@@ -344,7 +342,7 @@ export function addNoLyricsButton(song, artist, album, duration) {
   if (song) url.searchParams.append("title", song);
   if (artist) url.searchParams.append("artist", artist);
   if (album) url.searchParams.append("album", album);
-  if (duration) url.searchParams.append("duration", duration);
+  if (duration) url.searchParams.append("duration", duration.toString());
 
   addLyricsButton.addEventListener("click", () => {
     window.open(url.toString(), "_blank");
@@ -357,7 +355,7 @@ export function addNoLyricsButton(song, artist, album, duration) {
 /**
  * Injects required head tags including font links and image preloads.
  */
-export async function injectHeadTags() {
+export async function injectHeadTags(): Promise<void> {
   const imgURL = "https://better-lyrics.boidu.dev/icon-512.png";
 
   const imagePreload = document.createElement("link");
@@ -384,7 +382,7 @@ export async function injectHeadTags() {
     );
 
     for (let i = 0; i < cssFiles.length; i++) {
-      css += "/* " + cssFiles[i] + " */\n";
+      css += `/* ${cssFiles[i]} */\n`;
       css += await responses[i].text();
     }
 
@@ -396,15 +394,15 @@ export async function injectHeadTags() {
 /**
  * Cleans up this elements and resets state when switching songs.
  */
-export function cleanup() {
-  this.scrollPos = -1;
+export function cleanup(): void {
+  scrollPos = -1;
 
-  if (this.lyricsObserver) {
-    this.lyricsObserver.disconnect();
-    this.lyricsObserver = null;
+  if (lyricsObserver) {
+    lyricsObserver.disconnect();
+    lyricsObserver = null;
   }
 
-  const ytMusicLyrics = document.querySelector(Constants.NO_LYRICS_TEXT_SELECTOR)?.parentElement;
+  const ytMusicLyrics = (document.querySelector(Constants.NO_LYRICS_TEXT_SELECTOR) as HTMLElement)?.parentElement;
   if (ytMusicLyrics) {
     ytMusicLyrics.style.display = "";
   }
@@ -415,20 +413,20 @@ export function cleanup() {
     blyricsFooter.remove();
   }
 
-  this.getResumeScrollElement().setAttribute("autoscroll-hidden", "true");
+  getResumeScrollElement().setAttribute("autoscroll-hidden", "true");
 
   const buttonContainer = document.querySelector(".blyrics-no-lyrics-button-container");
   if (buttonContainer) {
     buttonContainer.remove();
   }
 
-  this.clearLyrics();
+  clearLyrics();
 }
 
 /**
  * Injects the player information script into the page.
  */
-export function injectGetSongInfo() {
+export function injectGetSongInfo(): void {
   const s = document.createElement("script");
   s.src = chrome.runtime.getURL("script.js");
   s.id = "blyrics-script";
@@ -438,8 +436,20 @@ export function injectGetSongInfo() {
   (document.head || document.documentElement).appendChild(s);
 }
 
+interface AnimEngineState {
+  skipScrolls: number;
+  skipScrollsDecayTimes: number[];
+  scrollResumeTime: number;
+  scrollPos: number;
+  selectedElementIndex: number;
+  nextScrollAllowedTime: number;
+  wasUserScrolling: boolean;
+  lastTime: number;
+  lastPlayState: boolean;
+  lastEventCreationTime: number;
+}
 
-export let animEngineState = {
+export let animEngineState: AnimEngineState = {
   skipScrolls: 0,
   skipScrollsDecayTimes: [],
   scrollResumeTime: 0,
@@ -455,10 +465,10 @@ export let animEngineState = {
 /**
  * @type {Map<string, number>}
  */
-export let cachedDurations = new Map();
+export let cachedDurations: Map<string, number> = new Map();
 
 /**
- * Gets and caches a css duration.
+ * Gets and caches a css duration. 
  * Note this function does not key its cache on the element provided --
  * it assumes that it isn't relevant to the calling code
  *
@@ -466,11 +476,11 @@ export let cachedDurations = new Map();
  * @param property - the css property to look up
  * @return {number} - in ms
  */
-export function getCSSDurationInMs(lyricsElement, property) {
-  let duration = this.cachedDurations.get(lyricsElement);
+export function getCSSDurationInMs(lyricsElement: HTMLElement, property: string): number {
+  let duration = cachedDurations.get(property);
   if (duration === undefined) {
     duration = toMs(window.getComputedStyle(lyricsElement).getPropertyValue(property));
-    this.cachedDurations.set(property, duration);
+    cachedDurations.set(property, duration);
   }
 
   return duration;
@@ -484,9 +494,9 @@ export function getCSSDurationInMs(lyricsElement, property) {
  * @param {boolean} [isPlaying=true] - Whether audio is currently playing
  * @param {boolean} [smoothScroll=true] - Whether to use smooth scrolling
  */
-export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smoothScroll = true) {
+export function tickLyrics(currentTime: number, eventCreationTime: number, isPlaying = true, smoothScroll = true): void | boolean {
   const now = Date.now();
-  if (this.isLoaderActive() || !AppState.areLyricsTicking || (currentTime === 0 && !isPlaying)) {
+  if (isLoaderActive() || !AppState.areLyricsTicking || (currentTime === 0 && !isPlaying)) {
     return;
   }
   animEngineState.lastTime = currentTime;
@@ -500,7 +510,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
 
   currentTime += timeOffset / 1000;
 
-  const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1];
+  const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1] as HTMLElement;
   console.assert(tabSelector != null);
 
   const playerState = document.getElementById("player-page").getAttribute("player-ui-state");
@@ -512,7 +522,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
   }
 
   try {
-    const lyricsElement = document.getElementsByClassName(Constants.LYRICS_CLASS)[0];
+    const lyricsElement = document.getElementsByClassName(Constants.LYRICS_CLASS)[0] as HTMLElement;
     // If lyrics element doesn't exist, clear the interval and return silently
     if (!lyricsElement) {
       AppState.areLyricsTicking = false;
@@ -528,20 +538,20 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
     }
 
     if (lyricData.syncType === "richsync") {
-      currentTime += this.getCSSDurationInMs(lyricsElement, "--blyrics-richsync-timing-offset") / 1000;
+      currentTime += getCSSDurationInMs(lyricsElement, "--blyrics-richsync-timing-offset") / 1000;
     } else {
-      currentTime += this.getCSSDurationInMs(lyricsElement, "--blyrics-timing-offset") / 1000;
+      currentTime += getCSSDurationInMs(lyricsElement, "--blyrics-timing-offset") / 1000;
     }
 
     const lyricScrollTime =
-      currentTime + this.getCSSDurationInMs(lyricsElement, "--blyrics-scroll-timing-offset") / 1000;
+      currentTime + getCSSDurationInMs(lyricsElement, "--blyrics-scroll-timing-offset") / 1000;
 
     const lines = AppState.lyricData.lines;
 
     let selectedLyricHeight = 0;
     let targetScrollPos = 0;
     let availableScrollTime = 999;
-    lines.every((lineData, index) => {
+    lines.every((lineData: any, index: number) => {
       const time = lineData.time;
       let nextTime = Infinity;
       if (index + 1 < lines.length) {
@@ -597,7 +607,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
 
         if (!lineData.isAnimating) {
           const children = [lineData, ...lineData.parts];
-          children.forEach(part => {
+          children.forEach((part: any) => {
             const elDuration = part.duration;
             const elTime = part.time;
             const timeDelta = currentTime - elTime;
@@ -625,7 +635,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
           if (!isPlaying) {
             lineData.selected = false;
             const children = [lineData, ...lineData.parts];
-            children.forEach(part => {
+            children.forEach((part: any) => {
               if (part.animationStartTimeMs > now) {
                 part.lyricElement.classList.remove(Constants.ANIMATING_CLASS);
                 part.lyricElement.classList.remove(Constants.PRE_ANIMATING_CLASS);
@@ -636,7 +646,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
       } else {
         if (lineData.selected) {
           const children = [lineData, ...lineData.parts];
-          children.forEach(part => {
+          children.forEach((part: any) => {
             part.lyricElement.style.setProperty("--blyrics-swipe-delay", "");
             part.lyricElement.style.setProperty("--blyrics-anim-delay", "");
             part.lyricElement.classList.remove(Constants.ANIMATING_CLASS);
@@ -652,7 +662,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
 
     // lyricsHeight can change slightly due to animations
     const lyricsHeight = lyricsElement.getBoundingClientRect().height;
-    const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR);
+    const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR) as HTMLElement;
     const tabRendererHeight = tabRenderer.getBoundingClientRect().height;
     let scrollTop = tabRenderer.scrollTop;
 
@@ -660,7 +670,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
 
     if (animEngineState.scrollResumeTime < Date.now() || animEngineState.scrollPos === -1) {
       if (animEngineState.wasUserScrolling) {
-        animEngineState.getResumeScrollElement().setAttribute("autoscroll-hidden", "true");
+        getResumeScrollElement().setAttribute("autoscroll-hidden", "true");
         lyricsElement.classList.remove(Constants.USER_SCROLLING_CLASS);
         animEngineState.wasUserScrolling = false;
       }
@@ -675,7 +685,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
           lyricsElement.style.transitionProperty = "";
           lyricsElement.style.transitionDuration = "";
 
-          let scrollTime = this.getCSSDurationInMs(lyricsElement, "transition-duration");
+          let scrollTime = getCSSDurationInMs(lyricsElement, "transition-duration");
           if (scrollTime > availableScrollTime * 1000 - 50) {
             scrollTime = availableScrollTime * 1000 - 50;
           }
@@ -699,14 +709,14 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
         }
         let extraHeight = Math.max(tabRendererHeight * (1 - topOffsetMultiplier), tabRendererHeight - lyricsHeight);
 
-        document.getElementById(Constants.LYRICS_SPACING_ELEMENT_ID).style.height =
+        (document.getElementById(Constants.LYRICS_SPACING_ELEMENT_ID) as HTMLElement).style.height =
           `${extraHeight.toFixed(0)}px`;
         scrollTop = scrollPos;
         animEngineState.scrollPos = scrollPos;
       }
     } else {
       if (!animEngineState.wasUserScrolling) {
-        this.getResumeScrollElement().removeAttribute("autoscroll-hidden");
+        getResumeScrollElement().removeAttribute("autoscroll-hidden");
         lyricsElement.classList.add(Constants.USER_SCROLLING_CLASS);
         animEngineState.wasUserScrolling = true;
       }
@@ -730,7 +740,7 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
       animEngineState.skipScrolls = 1; // Always leave at least one for when the window is refocused.
     }
   } catch (err) {
-    if (!err.message?.includes("undefined")) {
+    if (!(err as Error).message?.includes("undefined")) {
       Utils.log(Constants.LYRICS_CHECK_INTERVAL_ERROR, err);
     }
     return true;
@@ -740,11 +750,11 @@ export function tickLyrics(currentTime, eventCreationTime, isPlaying = true, smo
 /**
  * Called when a new lyrics element is added to trigger re-sync.
  */
-export function lyricsElementAdded() {
+export function lyricsElementAdded(): void {
   if (!AppState.areLyricsTicking) {
     return;
   }
-  this.tickLyrics(
+  tickLyrics(
     animEngineState.lastTime,
     animEngineState.lastEventCreationTime,
     animEngineState.lastPlayState,
@@ -758,7 +768,7 @@ export function lyricsElementAdded() {
  * @param {string} title - Song title
  * @param {string} artist - Artist name
  */
-export function injectSongAttributes(title, artist) {
+export function injectSongAttributes(title: string, artist: string): void {
   const mainPanel = document.getElementById("main-panel");
   console.assert(mainPanel != null);
   const existingSongInfo = document.getElementById("blyrics-song-info");
@@ -787,7 +797,7 @@ export function injectSongAttributes(title, artist) {
  *
  * @returns {HTMLElement} The resume scroll button element
  */
-export function getResumeScrollElement() {
+export function getResumeScrollElement(): HTMLElement {
   let elem = document.getElementById("autoscroll-resume-button");
   if (!elem) {
     const wrapper = document.createElement("div");
@@ -803,10 +813,10 @@ export function getResumeScrollElement() {
       elem.setAttribute("autoscroll-hidden", "true");
     });
 
-    document.querySelector("#side-panel > tp-yt-paper-tabs").after(wrapper);
+    (document.querySelector("#side-panel > tp-yt-paper-tabs") as HTMLElement).after(wrapper);
     wrapper.appendChild(elem);
   }
-  return elem;
+  return elem as HTMLElement;
 }
 
 
@@ -817,7 +827,7 @@ export function getResumeScrollElement() {
  * @param {Element} child - The child element
  * @returns {DOMRect} Rectangle with relative position and dimensions
  */
-function getRelativeBounds(parent, child) {
+function getRelativeBounds(parent: Element, child: Element): DOMRect {
   const parentBound = parent.getBoundingClientRect();
   const childBound = child.getBoundingClientRect();
   return new DOMRect(childBound.x - parentBound.x, childBound.y - parentBound.y, childBound.width, childBound.height);
@@ -828,12 +838,14 @@ function getRelativeBounds(parent, child) {
  *
  * @returns {number} Duration in milliseconds
  */
-function toMs(cssDuration) {
+function toMs(cssDuration: string): number {
+  if (!cssDuration) return 0;
   if (cssDuration.endsWith("s")) {
     return parseFloat(cssDuration.slice(0, -1)) * 1000;
   } else if (cssDuration.endsWith("ms")) {
     return parseFloat(cssDuration.slice(0, -2));
   }
+  return 0;
 }
 
 /**
@@ -841,6 +853,6 @@ function toMs(cssDuration) {
  *
  * @param {HTMLElement} elt - Element to reflow
  */
-function reflow(elt) {
+function reflow(elt: HTMLElement): void {
   void elt.offsetHeight;
 }

@@ -1,9 +1,10 @@
+// @ts-nocheck
 /**
  * Handles the Turnstile challenge by creating an iframe and returning a Promise.
  * The visibility of the iframe can be controlled for testing purposes.
  * @returns {Promise<string>} A promise that resolves with the Turnstile token.
  */
-function handleTurnstile() {
+function handleTurnstile(): Promise<string> {
   return new Promise((resolve, reject) => {
     const iframe = document.createElement("iframe");
     iframe.src = CUBEY_LYRICS_API_URL + "challenge";
@@ -17,7 +18,7 @@ function handleTurnstile() {
     iframe.style.zIndex = "999999";
     document.body.appendChild(iframe);
 
-    const messageListener = event => {
+    const messageListener = (event: MessageEvent) => {
       if (event.source !== iframe.contentWindow) {
         return;
       }
@@ -67,7 +68,7 @@ const CUBEY_LYRICS_API_URL = "https://lyrics.api.dacubeking.com/";
  *
  *./
 
- /**
+/**
  * @typedef {object} AudioTrackData
  * @property {string} id
  * @property {object} kc
@@ -133,7 +134,7 @@ const CUBEY_LYRICS_API_URL = "https://lyrics.api.dacubeking.com/";
  */
 
 /**
- * @typedef {Object} Lyric
+ * @typedef {Object}
  * @property {number} startTimeMs
  * @property {string} words
  * @property {number} durationMs
@@ -141,14 +142,14 @@ const CUBEY_LYRICS_API_URL = "https://lyrics.api.dacubeking.com/";
  */
 
 /**
- * @typedef {Object} LyricPart
+ * @typedef {Object}
  * @property {number} startTimeMs
  * @property {string} words
  * @property {number} durationMs
  */
 
 /**
- * @typedef {Object} ProviderParameters
+ * @typedef {Object}
  * @property {string} song
  * @property {string} artist
  * @property {string} duration
@@ -169,15 +170,15 @@ import * as RequestSniffing from "./requestSniffer";
    *
    * @param {ProviderParameters} providerParameters
    */
-  async function cubey(providerParameters) {
+  async function cubey(providerParameters: ProviderParameters): Promise<void> {
 
     /**
      * Gets a valid JWT, either from storage or by forcing a new Turnstile challenge.
      * @param {boolean} [forceNew=false] - If true, ignores and overwrites any stored token.
      * @returns {Promise<string|null>} A promise that resolves with the JWT.
      */
-    async function getAuthenticationToken(forceNew = false) {
-      function isJwtExpired(token) {
+    async function getAuthenticationToken(forceNew = false): Promise<string|null> {
+      function isJwtExpired(token: string): boolean {
         try {
           const payloadBase64Url = token.split(".")[1];
           if (!payloadBase64Url) return true;
@@ -212,7 +213,7 @@ import * as RequestSniffing from "./requestSniffer";
 
       try {
         Utils.log("[BetterLyrics] No valid JWT found, initiating Turnstile challenge...");
-        const turnstileToken = await handleTurnstile({ visible: false });
+        const turnstileToken = await handleTurnstile();
 
         const response = await fetch(CUBEY_LYRICS_API_URL + "verify-turnstile", {
           method: "POST",
@@ -242,7 +243,7 @@ import * as RequestSniffing from "./requestSniffer";
      * @param {string} jwt - The JSON Web Token for authorization.
      * @returns {Promise<Response>} The fetch Response object.
      */
-    async function makeApiCall(jwt) {
+    async function makeApiCall(jwt: string): Promise<Response> {
       const url = new URL(CUBEY_LYRICS_API_URL + "lyrics");
       url.searchParams.append("song", providerParameters.song);
       url.searchParams.append("artist", providerParameters.artist);
@@ -253,7 +254,7 @@ import * as RequestSniffing from "./requestSniffer";
       }
       url.searchParams.append("alwaysFetchMetadata", String(providerParameters.alwaysFetchMetadata));
 
-      return await fetch(url, {
+      return await fetch(url.toString(), {
         signal: AbortSignal.any([providerParameters.signal, AbortSignal.timeout(10000)]),
         headers: {
           Authorization: `Bearer ${jwt}`,
@@ -372,7 +373,7 @@ import * as RequestSniffing from "./requestSniffer";
       source: "LRCLib",
       sourceHref: "https://lrclib.net",
       musicVideoSynced: false,
-    cacheAllowed: false,};
+cacheAllowed: false,};
   }
 
   ["musixmatch-synced", "musixmatch-richsync", "lrclib-synced", "lrclib-plain"].forEach(source => {
@@ -381,18 +382,17 @@ import * as RequestSniffing from "./requestSniffer";
 }
 
 /**
- *
+ * 
  * @param {ProviderParameters} providerParameters
  */
-async function bLyrics(providerParameters) {
+async function bLyrics(providerParameters: ProviderParameters): Promise<void> {
   // Fetch from the primary API if cache is empty or invalid
   const url = new URL(Constants.LYRICS_API_URL);
   url.searchParams.append("s", providerParameters.song);
   url.searchParams.append("a", providerParameters.artist);
   url.searchParams.append("d", providerParameters.duration);
 
-  const response = await fetch(url.toString(), {signal: AbortSignal.any([providerParameters.signal, AbortSignal.timeout(10000)]),
-    });
+  const response = await fetch(url.toString(), {signal: AbortSignal.any([providerParameters.signal, AbortSignal.timeout(10000)])});
 
   if (!response.ok) {
     return null;
@@ -415,7 +415,7 @@ async function bLyrics(providerParameters) {
 /**
  * @param {ProviderParameters} providerParameters
  */
-async function lyricLib(providerParameters) {
+async function lyricLib(providerParameters: ProviderParameters): Promise<void> {
   const url = new URL(Constants.LRCLIB_API_URL);
   url.searchParams.append("track_name", providerParameters.song);
   url.searchParams.append("artist_name", providerParameters.artist);
@@ -457,7 +457,7 @@ async function lyricLib(providerParameters) {
         source: "LRCLib",
         sourceHref: "https://lrclib.net",
         musicVideoSynced: false,
-      cacheAllowed: false,};
+cacheAllowed: false,};
     }
   }
 
@@ -468,7 +468,7 @@ async function lyricLib(providerParameters) {
 /**
  * @param {ProviderParameters} providerParameters
  */
-async function ytLyrics(providerParameters) {
+async function ytLyrics(providerParameters: ProviderParameters): Promise<void> {
   let lyricsObj = await RequestSniffing.getLyrics(providerParameters.videoId);
   if (lyricsObj.hasLyrics) {
     let lyricsText = lyricsObj.lyrics;
@@ -481,18 +481,18 @@ async function ytLyrics(providerParameters) {
       source: sourceText,
       sourceHref: "",
       musicVideoSynced: false,
-    cacheAllowed: false,};
+cacheAllowed: false,};
   }
 
   providerParameters.sourceMap.get("yt-lyrics").filled = true;
 }
 
 /**
- *
+ * 
  * @param {ProviderParameters} providerParameters
  * @return {Promise<void>}
  */
-async function ytCaptions(providerParameters) {
+async function ytCaptions(providerParameters: ProviderParameters): Promise<void> {
   let audioTrackData = providerParameters.audioTrackData;
   if (audioTrackData.captionTracks.length === 0) {
     return;
@@ -501,7 +501,7 @@ async function ytCaptions(providerParameters) {
   /**
    * @type string
    */
-  let langCode;
+  let langCode: string;
   if (audioTrackData.captionTracks.length === 1) {
     langCode = audioTrackData.captionTracks[0].languageCode;
   } else {
@@ -522,7 +522,7 @@ async function ytCaptions(providerParameters) {
     providerParameters.sourceMap.get("yt-captions").lyricSourceResult = null;
   }
 
-  let captionsUrl;
+  let captionsUrl: string;
   for (let captionTracksKey in audioTrackData.captionTracks) {
     let data = audioTrackData.captionTracks[captionTracksKey];
     if (!data.displayName.includes("auto-generated") && data.languageCode === langCode) {
@@ -541,7 +541,7 @@ async function ytCaptions(providerParameters) {
   captionsUrl = new URL(captionsUrl);
   captionsUrl.searchParams.set("fmt", "json3");
 
-  let captionData = await fetch(captionsUrl, {
+  let captionData = await fetch(captionsUrl.toString(), {
     method: "GET",
   signal: AbortSignal.any([providerParameters.signal, AbortSignal.timeout(10000)]),
     }).then(response => response.json());
@@ -549,14 +549,14 @@ async function ytCaptions(providerParameters) {
   /**
    * @type {LyricsArray}
    */
-  let lyricsArray = [];
+  let lyricsArray: LyricsArray = [];
 
   captionData.events.forEach(event => {
     let words = "";
     for (let segsKey in event.segs) {
       words += event.segs[segsKey].utf8;
     }
-    words = words.replaceAll("\n", " ");
+    words = words.replace(/\n/g, " ");
     for (let c of Constants.MUSIC_NOTES) {
       words = words.trim();
       if (words.startsWith(c)) {
@@ -598,14 +598,14 @@ async function ytCaptions(providerParameters) {
 /**
  * @type {string[]}
  */
-export let providerPriority = [];
+export let providerPriority: string[] = [];
 
-export function initProviders() {
+export function initProviders(): void {
   /**
    *
    * @param {string[]} preferredProviderList
    */
-  const updateProvidersList = preferredProviderList => {
+  const updateProvidersList = (preferredProviderList: string[] | null) => {
     let defaultPreferredProviderList = [
       "musixmatch-richsync",
       "yt-captions",
@@ -656,10 +656,10 @@ export function initProviders() {
 /**
  * @return {Map<string, LyricSource>} sources
  */
-export function newSourceMap() {
-  let sources = new Map();
+export function newSourceMap(): Map<string, LyricSource> {
+  let sources = new Map<string, LyricSource>();
 
-  function addSource(sourceName, sourceFiller) {
+  function addSource(sourceName: string, sourceFiller) {
     sources.set(sourceName, {
       filled: false,
       lyricSourceResult: null,
@@ -681,7 +681,7 @@ export function newSourceMap() {
  * @param {ProviderParameters} providerParameters
  * @param {string} source
  */
-export async function getLyrics(providerParameters, source) {
+export async function getLyrics(providerParameters: ProviderParameters, source: string): Promise<LyricSourceResult | null> {
   if (providerParameters.sourceMap.has(source)) {
     let lyricSource = providerParameters.sourceMap.get(source);
     if (!lyricSource.filled) {
@@ -700,14 +700,14 @@ export async function getLyrics(providerParameters, source) {
  * @param songDuration {number}
  * @return {LyricsArray}
  */
-function parseLRC(lrcText, songDuration) {
+function parseLRC(lrcText: string, songDuration: number): LyricsArray {
   const lines = lrcText.split("\n");
-  const result = [];
+  const result: LyricsArray = [];
   const idTags = {};
   const possibleIdTags = ["ti", "ar", "al", "au", "lr", "length", "by", "offset", "re", "tool", "ve", "#"];
 
   // Parse time in [mm:ss.xx] or <mm:ss.xx> format to milliseconds
-  function parseTime(timeStr) {
+  function parseTime(timeStr: string): number | null {
     const match = timeStr.match(/(\d+):(\d+\.\d+)/);
     if (!match) return null;
     const minutes = parseInt(match[1], 10);
@@ -720,17 +720,17 @@ function parseLRC(lrcText, songDuration) {
     line = line.trim();
 
     // Match ID tags [type:value]
-    const idTagMatch = line.match(/^\[(\w+):(.*)]$/);
+    const idTagMatch = line.match(/^[\[](\w+):(.*)[\]]$/);
     if (idTagMatch && possibleIdTags.includes(idTagMatch[1])) {
       idTags[idTagMatch[1]] = idTagMatch[2];
       return;
     }
 
     // Match time tags with lyrics
-    const timeTagRegex = /\[(\d+:\d+\.\d+)]/g;
+    const timeTagRegex = /[\[](\d+:\d+\.\d+)[\]]/g;
     const enhancedWordRegex = /<(\d+:\d+\.\d+)>/g;
 
-    const timeTags = [];
+    const timeTags: number[] = [];
     let match;
     while ((match = timeTagRegex.exec(line)) !== null) {
       timeTags.push(parseTime(match[1]));
@@ -741,8 +741,8 @@ function parseLRC(lrcText, songDuration) {
     const lyricPart = line.replace(timeTagRegex, "").trim();
 
     // Extract enhanced lyrics (if available)
-    const parts = [];
-    let lastTime = null;
+    const parts: LyricPart[] = [];
+    let lastTime: number | null = null;
     let plainText = "";
 
     lyricPart.split(enhancedWordRegex).forEach((fragment, index) => {
@@ -827,7 +827,7 @@ function parseLRC(lrcText, songDuration) {
 /**
  * @param lyrics {LyricsArray}
  */
-function lrcFixers(lyrics) {
+function lrcFixers(lyrics: LyricsArray): void {
   // if the duration of the space after a word is a similar duration to the word,
   // move the duration of the space into the word.
   // or if it's short, remove the break to improve smoothness
@@ -915,11 +915,11 @@ function lrcFixers(lyrics) {
  * @param {string} lyricsText
  * @return {LyricsArray}
  */
-function parsePlainLyrics(lyricsText) {
+function parsePlainLyrics(lyricsText: string): LyricsArray {
   /**
    * @type {LyricsArray}
    */
-  const lyricsArray = [];
+  const lyricsArray: LyricsArray = [];
   lyricsText.split("\n").forEach(words => {
     lyricsArray.push({
       startTimeMs: 0,
@@ -930,4 +930,3 @@ function parsePlainLyrics(lyricsText) {
   });
   return lyricsArray;
 }
-

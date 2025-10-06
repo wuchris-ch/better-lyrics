@@ -6,12 +6,14 @@ import * as Storage from "../../core/storage"
 import {AppState} from "../../index";
 import * as BetterLyrics from "../../index";
 
+type EnableDisableCallback = () => void;
+
 /**
  * Handles settings initialization and applies user preferences.
  * Sets up fullscreen behavior, animations, and other settings.
  */
-export function handleSettings() {
-  this.onFullScreenDisabled(
+export function handleSettings(): void {
+  onFullScreenDisabled(
     () => {
       const layout = document.getElementById("layout");
       const playerPage = document.getElementById("player-page");
@@ -32,7 +34,7 @@ export function handleSettings() {
     }
   );
 
-  this.onStylizedAnimationsEnabled(
+  onStylizedAnimationsEnabled(
     () => {
       let styleElm = document.getElementById("blyrics-disable-effects");
       if (styleElm) {
@@ -54,7 +56,7 @@ export function handleSettings() {
   );
 }
 
-export function onAutoSwitchEnabled(enableAutoSwitch) {
+export function onAutoSwitchEnabled(enableAutoSwitch: EnableDisableCallback): void {
   Storage.getStorage({isAutoSwitchEnabled: false}, items => {
     if (items.isAutoSwitchEnabled) {
       enableAutoSwitch();
@@ -62,7 +64,7 @@ export function onAutoSwitchEnabled(enableAutoSwitch) {
   });
 }
 
-export function onFullScreenDisabled(disableFullScreen, enableFullScreen) {
+export function onFullScreenDisabled(disableFullScreen: EnableDisableCallback, enableFullScreen: EnableDisableCallback): void {
   Storage.getStorage({isFullScreenDisabled: false}, items => {
     if (items.isFullScreenDisabled) {
       disableFullScreen();
@@ -72,7 +74,7 @@ export function onFullScreenDisabled(disableFullScreen, enableFullScreen) {
   });
 }
 
-export function onAlbumArtEnabled(enableAlbumArt, disableAlbumArt) {
+export function onAlbumArtEnabled(enableAlbumArt: EnableDisableCallback, disableAlbumArt: EnableDisableCallback): void {
   Storage.getStorage({isAlbumArtEnabled: true}, items => {
     if (items.isAlbumArtEnabled) {
       enableAlbumArt();
@@ -82,7 +84,7 @@ export function onAlbumArtEnabled(enableAlbumArt, disableAlbumArt) {
   });
 }
 
-export function onStylizedAnimationsEnabled(enableAnimations, disableAnimations) {
+export function onStylizedAnimationsEnabled(enableAnimations: EnableDisableCallback, disableAnimations: EnableDisableCallback): void {
   Storage.getStorage({isStylizedAnimationsEnabled: true}, items => {
     if (items.isStylizedAnimationsEnabled) {
       enableAnimations();
@@ -92,7 +94,7 @@ export function onStylizedAnimationsEnabled(enableAnimations, disableAnimations)
   });
 }
 
-export function onAutoHideCursor(enableCursorAutoHide, disableCursorAutoHide) {
+export function onAutoHideCursor(enableCursorAutoHide: EnableDisableCallback, disableCursorAutoHide: EnableDisableCallback): void {
   Storage.getStorage({isCursorAutoHideEnabled: true}, items => {
     if (items.isCursorAutoHideEnabled) {
       enableCursorAutoHide();
@@ -102,11 +104,11 @@ export function onAutoHideCursor(enableCursorAutoHide, disableCursorAutoHide) {
   });
 }
 
-let mouseTimer = null;
-let cursorEventListener = null;
+let mouseTimer: number | null = null;
+let cursorEventListener: ((this: Document, ev: MouseEvent) => any) | null = null;
 
-export function hideCursorOnIdle() {
-  this.onAutoHideCursor(
+export function hideCursorOnIdle(): void {
+  onAutoHideCursor(
     () => {
       let cursorVisible = true;
 
@@ -147,7 +149,7 @@ export function hideCursorOnIdle() {
   );
 }
 
-export function listenForPopupMessages() {
+export function listenForPopupMessages(): void {
   chrome.runtime.onMessage.addListener((request, _, sendResponse) => {
     if (request.action === "updateCSS") {
       // Enhanced CSS handling - use the new loadCustomCSS method
@@ -161,10 +163,10 @@ export function listenForPopupMessages() {
     } else if (request.action === "updateSettings") {
       Translation.clearCache();
       Utils.setUpLog();
-      this.hideCursorOnIdle();
-      this.handleSettings();
+      hideCursorOnIdle();
+      handleSettings();
       AppState.shouldInjectAlbumArt = "Unknown";
-      this.onAlbumArtEnabled(
+      onAlbumArtEnabled(
         () => (AppState.shouldInjectAlbumArt = true),
         () => {
           AppState.shouldInjectAlbumArt = false;
@@ -184,4 +186,3 @@ export function listenForPopupMessages() {
     }
   });
 }
-

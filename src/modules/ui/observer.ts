@@ -1,21 +1,20 @@
-import * as Observer from "./observer";
 import * as Settings from "../settings/settings";
 import * as Dom from "./dom";
-import * as Constants from "../../core/constants"
-import * as BetterLyrics from "../../index"
+import * as Constants from "../../core/constants";
+import * as BetterLyrics from "../../index";
 import * as Utils from "../../core/utils";
-import * as DOM from "./dom";
-import {AppState} from "../../index";
+import { AppState } from "../../index";
+import { PlayerDetails } from "../../index";
 
 /**
  * Enables the lyrics tab and prevents it from being disabled by YouTube Music.
  * Sets up a MutationObserver to watch for attribute changes.
  */
-export function enableLyricsTab() {
-  const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1];
+export function enableLyricsTab(): void {
+  const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1] as HTMLElement;
   if (!tabSelector) {
     setTimeout(() => {
-      Observer.enableLyricsTab();
+      enableLyricsTab();
     }, 1000);
     return;
   }
@@ -29,18 +28,18 @@ export function enableLyricsTab() {
       }
     });
   });
-  observer.observe(tabSelector, {attributes: true});
+  observer.observe(tabSelector, { attributes: true });
 }
 
 /**
  * Disables the inert attribute on the side panel when entering fullscreen.
  * Ensures lyrics tab remains accessible in fullscreen mode.
  */
-export function disableInertWhenFullscreen() {
+export function disableInertWhenFullscreen(): void {
   const panelElem = document.getElementById("side-panel");
   if (!panelElem) {
     setTimeout(() => {
-      Observer.disableInertWhenFullscreen();
+      disableInertWhenFullscreen();
     }, 1000);
     return;
   }
@@ -52,8 +51,8 @@ export function disableInertWhenFullscreen() {
         mutations.forEach(mutation => {
           if (mutation.attributeName === "inert") {
             // entering fullscreen mode
-            mutation.target.removeAttribute("inert");
-            const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1];
+            (mutation.target as HTMLElement).removeAttribute("inert");
+            const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1] as HTMLElement;
             if (tabSelector && tabSelector.getAttribute("aria-selected") !== "true") {
               // ensure lyrics tab is selected
               tabSelector.click();
@@ -62,7 +61,7 @@ export function disableInertWhenFullscreen() {
         })
     );
   });
-  observer.observe(panelElem, {attributes: true});
+  observer.observe(panelElem, { attributes: true });
   panelElem.removeAttribute("inert");
 }
 
@@ -73,15 +72,15 @@ let scrollPositions = [0, 0, 0];
  * Sets up tab click handlers and manages scroll positions between tabs.
  * Handles lyrics reloading when the lyrics tab is clicked.
  */
-export function lyricReloader() {
+export function lyricReloader(): void {
   const tabs = document.getElementsByClassName(Constants.TAB_CONTENT_CLASS);
 
-  const [tab1, tab2, tab3] = tabs;
+  const [tab1, tab2, tab3] = Array.from(tabs);
 
   if (tab1 !== undefined && tab2 !== undefined && tab3 !== undefined) {
     for (let i = 0; i < tabs.length; i++) {
       tabs[i].addEventListener("click", () => {
-        const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR);
+        const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR) as HTMLElement;
         scrollPositions[currentTab] = tabRenderer.scrollTop;
         tabRenderer.scrollTop = scrollPositions[i];
         currentTab = i;
@@ -92,17 +91,17 @@ export function lyricReloader() {
       Dom.getResumeScrollElement().classList.remove("blyrics-hidden");
       if (!AppState.areLyricsLoaded) {
         Utils.log(Constants.LYRICS_TAB_CLICKED_LOG);
-        DOM.cleanup();
-        DOM.renderLoader();
+        Dom.cleanup();
+        Dom.renderLoader();
 
       }
     });
 
-    const hideAutoscrollResume = () => DOM.getResumeScrollElement().classList.add("blyrics-hidden");
+    const hideAutoscrollResume = () => Dom.getResumeScrollElement().classList.add("blyrics-hidden");
     tab1.addEventListener("click", hideAutoscrollResume);
     tab3.addEventListener("click", hideAutoscrollResume);
   } else {
-    setTimeout(() => Observer.lyricReloader(), 1000);
+    setTimeout(() => lyricReloader(), 1000);
   }
 }
 
@@ -110,13 +109,10 @@ export function lyricReloader() {
  * Initializes the main player time event listener.
  * Handles video changes, lyric injection, and player state updates.
  */
-export function initializeLyrics() {
+export function initializeLyrics(): void {
   document.addEventListener(
     "blyrics-send-player-time",
-    /**
-     * @param {CustomEvent<PlayerDetails>} event - Custom event with player details
-     */
-    event => {
+    (event: CustomEvent<PlayerDetails>) => {
       const detail = event.detail;
 
       const currentVideoId = detail.videoId;
@@ -156,12 +152,12 @@ export function initializeLyrics() {
         document.getElementById("main-panel")
       ) {
         AppState.queueSongDetailsInjection = false;
-        DOM.injectSongAttributes(detail.song, detail.artist);
+        Dom.injectSongAttributes(detail.song, detail.artist);
       }
 
       if (AppState.queueAlbumArtInjection === true && AppState.shouldInjectAlbumArt === true) {
         AppState.queueAlbumArtInjection = false;
-        DOM.addAlbumArtToLayout(currentVideoId);
+        Dom.addAlbumArtToLayout(currentVideoId);
       }
 
       if (AppState.lyricInjectionFailed) {
@@ -172,7 +168,7 @@ export function initializeLyrics() {
       }
 
       if (AppState.queueLyricInjection || AppState.lyricInjectionFailed) {
-        const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1];
+        const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1] as HTMLElement;
         if (tabSelector) {
           AppState.queueLyricInjection = false;
           AppState.lyricInjectionFailed = false;
@@ -185,7 +181,7 @@ export function initializeLyrics() {
           BetterLyrics.handleModifications(detail);
         }
       }
-      DOM.tickLyrics(detail.currentTime, detail.browserTime, detail.playing);
+      Dom.tickLyrics(detail.currentTime, detail.browserTime, detail.playing);
     }
   );
 }
@@ -194,23 +190,22 @@ export function initializeLyrics() {
  * Handles scroll events on the tab renderer.
  * Manages autoscroll pause/resume functionality.
  */
-export function scrollEventHandler() {
+export function scrollEventHandler(): void {
   const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1];
   if (tabSelector.getAttribute("aria-selected") !== "true" || !AppState.areLyricsTicking) {
     return;
   }
 
-  if (DOM.animEngineState.skipScrolls > 0) {
-    DOM.animEngineState.skipScrolls--;
-    DOM.animEngineState.skipScrollsDecayTimes.shift();
+  if (Dom.animEngineState.skipScrolls > 0) {
+    Dom.animEngineState.skipScrolls--;
+    Dom.animEngineState.skipScrollsDecayTimes.shift();
     // Utils.log("[BetterLyrics] Skipping Lyrics Scroll");
     return;
   }
-  if (!DOM.isLoaderActive()) {
-    if (DOM.animEngineState.scrollResumeTime < Date.now()) {
+  if (!Dom.isLoaderActive()) {
+    if (Dom.animEngineState.scrollResumeTime < Date.now()) {
       Utils.log(Constants.PAUSING_LYRICS_SCROLL_LOG);
     }
-    DOM.animEngineState.scrollResumeTime = Date.now() + 25000;
+    Dom.animEngineState.scrollResumeTime = Date.now() + 25000;
   }
 }
-

@@ -16,6 +16,7 @@ import * as LyricProviders from "./providers";
 import * as RequestSniffing from "./requestSniffer";
 import * as Storage from "../../core/storage"
 import {AppState} from "../../index";
+import {PlayerDetails} from "../../index";
 
 /** Current version of the lyrics cache format */
 const LYRIC_CACHE_VERSION = "1.2.0";
@@ -34,7 +35,7 @@ const LYRIC_CACHE_VERSION = "1.2.0";
  * @param {PlayerDetails} detail - Song and player details
  * @param signal {AbortSignal}
    */
-export async function createLyrics(detail, signal) {
+export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): Promise<void> {
   let song = detail.song;
   let artist = detail.artist;
   let videoId = detail.videoId;
@@ -287,7 +288,7 @@ export async function createLyrics(detail, signal) {
  * @param {string} cacheKey - Storage key for caching
  * @param {Object} data - Lyrics data to cache and process
  */
-function cacheAndProcessLyrics(cacheKey, data) {
+function cacheAndProcessLyrics(cacheKey: string, data: any): void {
   if (data.cacheAllowed === undefined || data.cacheAllowed) {
     data.version = LYRIC_CACHE_VERSION;
     const oneWeekInMs = 7 * 24 * 60 * 60 * 1000;
@@ -305,7 +306,7 @@ function cacheAndProcessLyrics(cacheKey, data) {
  * @param {string} data.language - Language code for the lyrics
  * @param {Array} data.lyrics - Array of lyric lines
  */
-function processLyrics(data, keepLoaderVisible = false) {
+function processLyrics(data: any, keepLoaderVisible = false): void {
   const lyrics = data.lyrics;
   if (!lyrics || lyrics.length === 0) {
     throw new Error(Constants.NO_LYRICS_FOUND_LOG);
@@ -319,7 +320,7 @@ function processLyrics(data, keepLoaderVisible = false) {
   }
 
   try {
-    const lyricsElement = document.getElementsByClassName(Constants.LYRICS_CLASS)[0];
+    const lyricsElement = document.getElementsByClassName(Constants.LYRICS_CLASS)[0] as HTMLElement;
     lyricsElement.innerHTML = "";
   } catch (_err) {
     Utils.log(Constants.LYRICS_TAB_NOT_DISABLED_LOG);
@@ -338,7 +339,7 @@ function processLyrics(data, keepLoaderVisible = false) {
  * @param {string} [data.source] - Source attribution for lyrics
  * @param {string} [data.sourceHref] - URL for source link
  */
-function injectLyrics(data, keepLoaderVisible = false) {
+function injectLyrics(data: any, keepLoaderVisible = false): void {
   const lyrics = data.lyrics;
   DOM.cleanup();
   let lyricsWrapper = DOM.createLyricsWrapper();
@@ -354,8 +355,8 @@ function injectLyrics(data, keepLoaderVisible = false) {
 
       // add a line at -1s so that we scroll to it at when the song starts
       let line = document.createElement("div");
-      line.dataset.time = -1;
-      line.style = "--blyrics-duration: 0s; padding-top: 0 !important; padding-bottom: 0 !important;";
+      line.dataset.time = "-1";
+      line.style.cssText = "--blyrics-duration: 0s; padding-top: 0 !important; padding-bottom: 0 !important;";
       lyricsContainer.appendChild(line);
     } catch (_err) {
       Utils.log(Constants.LYRICS_WRAPPER_NOT_VISIBLE_LOG);
@@ -373,7 +374,7 @@ function injectLyrics(data, keepLoaderVisible = false) {
     DOM.flushLoader(allZero && lyrics[0].words !== Constants.NO_LYRICS_TEXT);
   }
 
-  const langPromise = new Promise(async resolve => {
+  const langPromise = new Promise<string>(async resolve => {
     if (!data.language) {
       let text = "";
       let lineCount = 0;
@@ -389,7 +390,7 @@ function injectLyrics(data, keepLoaderVisible = false) {
       Utils.log("[BetterLyrics] Lang was missing. Determined it is: " + lang);
       return resolve(lang);
     } else {
-      resolve();
+      resolve(data.language);
     }
   });
   /**
@@ -547,9 +548,7 @@ function injectLyrics(data, keepLoaderVisible = false) {
     if (!allZero) {
       lyricElement.setAttribute(
         "onClick",
-        `const player = document.getElementById("movie_player"); player.seekTo(${
-          item.startTimeMs / 1000
-        }, true);player.playVideo();`
+        `const player = document.getElementById("movie_player"); player.seekTo(${item.startTimeMs / 1000}, true);player.playVideo();`
       );
       lyricElement.addEventListener("click", _e => {
         DOM.animEngineState.scrollResumeTime = 0;
@@ -699,19 +698,13 @@ function injectLyrics(data, keepLoaderVisible = false) {
  * @param {boolean} [caseSensitive=false] Optional. Whether you want to consider case in string matching. Default false;
  * @returns Number between 0 and 1, with 0 being a low match score.
  */
-const stringSimilarity = function (str1, str2, substringLength, caseSensitive) {
-  if (substringLength === void 0) {
-    substringLength = 2;
-  }
-  if (caseSensitive === void 0) {
-    caseSensitive = false;
-  }
+const stringSimilarity = (str1: string, str2: string, substringLength = 2, caseSensitive = false): number => {
   if (!caseSensitive) {
     str1 = str1.toLowerCase();
     str2 = str2.toLowerCase();
   }
   if (str1.length < substringLength || str2.length < substringLength) return 0;
-  const map = new Map();
+  const map = new Map<string, number>();
   for (let i = 0; i < str1.length - (substringLength - 1); i++) {
     const substr1 = str1.substring(i, i + substringLength);
     map.set(substr1, map.has(substr1) ? map.get(substr1) + 1 : 1);
@@ -728,7 +721,7 @@ const stringSimilarity = function (str1, str2, substringLength, caseSensitive) {
   return (match * 2) / (str1.length + str2.length - (substringLength - 1) * 2);
 }
 
-const testRtl = text => /[\u0600-\u06FF]|[\ufb50-\ufdff]|[\u0590-\u05ff]|[\u0780-\u07bf]/.test(text);
+const testRtl = (text: string): boolean => /[؀-ۿ]|[ｐ-￐]|[֐-׿]|[ހ-޿]/.test(text);
 
 /**
  * This regex is designed to detect any characters that are outside of the
@@ -743,13 +736,13 @@ const testRtl = text => /[\u0600-\u06FF]|[\ufb50-\ufdff]|[\u0590-\u05ff]|[\u0780
  * \u2018-\u201D - This range covers common "smart" or curly punctuation, including single
  * and double quotation marks/apostrophes (‘, ’, “, ”).
  */
-const nonLatinRegex = /[^\x00-\xFF\u2018-\u201D]/;
+const nonLatinRegex = /[^ -ÿ‘-”]/;
 
 /**
  * Checks if a given string contains any non-Latin characters.
  * @param {string} text The string to check.
  * @returns {boolean} True if a non-Latin character is found, otherwise false.
  */
-function containsNonLatin(text) {
+function containsNonLatin(text: string): boolean {
   return nonLatinRegex.test(text);
 }

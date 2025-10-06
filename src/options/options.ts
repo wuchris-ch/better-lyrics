@@ -1,19 +1,33 @@
+// @ts-nocheck
 // Function to save user options
 
 import {browser} from "../../extension.config.js";
 
 import Sortable from "sortablejs";
 
-const saveOptions = () => {
+interface Options {
+  isLogsEnabled: boolean;
+  isAutoSwitchEnabled: boolean;
+  isAlbumArtEnabled: boolean;
+  isFullScreenDisabled: boolean;
+  isStylizedAnimationsEnabled: boolean;
+  isTranslateEnabled: boolean;
+  translationLanguage: string;
+  isCursorAutoHideEnabled: boolean;
+  isRomanizationEnabled: boolean;
+  preferredProviderList: string[];
+}
+
+const saveOptions = (): void => {
   const options = getOptionsFromForm();
 
-  function arrayEqual(a, b) {
+  function arrayEqual(a: any[], b: any[]): boolean {
     return (
       Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((element, index) => element === b[index])
     );
   }
 
-  chrome.storage.sync.get({preferredProviderList: null}, currentOptions => {
+  chrome.storage.sync.get({preferredProviderList: null}, (currentOptions: { preferredProviderList: string[] | null }) => {
     if (!arrayEqual(currentOptions.preferredProviderList, options.preferredProviderList)) {
       clearTransientLyrics(() => {
         saveOptionsToStorage(options);
@@ -25,33 +39,33 @@ const saveOptions = () => {
 };
 
 // Function to get options from form elements
-const getOptionsFromForm = () => {
-  const preferredProviderList = [];
+const getOptionsFromForm = (): Options => {
+  const preferredProviderList: string[] = [];
   const providerElems = document.getElementById("providers-list").children;
   for (let i = 0; i < providerElems.length; i++) {
     let id = providerElems[i].id.slice(2);
-    if (!providerElems[i].children[1].children[0].checked) {
+    if (!(providerElems[i].children[1].children[0] as HTMLInputElement).checked) {
       id = "d_" + id;
     }
     preferredProviderList.push(id);
   }
 
   return {
-    isLogsEnabled: document.getElementById("logs").checked,
-    isAutoSwitchEnabled: document.getElementById("autoSwitch").checked,
-    isAlbumArtEnabled: document.getElementById("albumArt").checked,
-    isFullScreenDisabled: document.getElementById("isFullScreenDisabled").checked,
-    isStylizedAnimationsEnabled: document.getElementById("isStylizedAnimationsEnabled").checked,
-    isTranslateEnabled: document.getElementById("translate").checked,
-    translationLanguage: document.getElementById("translationLanguage").value,
-    isCursorAutoHideEnabled: document.getElementById("cursorAutoHide").checked,
-    isRomanizationEnabled: document.getElementById("isRomanizationEnabled").checked,
+    isLogsEnabled: (document.getElementById("logs") as HTMLInputElement).checked,
+    isAutoSwitchEnabled: (document.getElementById("autoSwitch") as HTMLInputElement).checked,
+    isAlbumArtEnabled: (document.getElementById("albumArt") as HTMLInputElement).checked,
+    isFullScreenDisabled: (document.getElementById("isFullScreenDisabled") as HTMLInputElement).checked,
+    isStylizedAnimationsEnabled: (document.getElementById("isStylizedAnimationsEnabled") as HTMLInputElement).checked,
+    isTranslateEnabled: (document.getElementById("translate") as HTMLInputElement).checked,
+    translationLanguage: (document.getElementById("translationLanguage") as HTMLInputElement).value,
+    isCursorAutoHideEnabled: (document.getElementById("cursorAutoHide") as HTMLInputElement).checked,
+    isRomanizationEnabled: (document.getElementById("isRomanizationEnabled") as HTMLInputElement).checked,
     preferredProviderList: preferredProviderList,
   };
 };
 
 // Function to save options to Chrome storage
-const saveOptionsToStorage = options => {
+const saveOptionsToStorage = (options: Options): void => {
   chrome.storage.sync.set(options, () => {
     chrome.tabs.query({url: "https://music.youtube.com/*"}, tabs => {
       tabs.forEach(tab => {
@@ -62,7 +76,7 @@ const saveOptionsToStorage = options => {
 };
 
 // Function to show save confirmation message
-const _showSaveConfirmation = () => {
+const _showSaveConfirmation = (): void => {
   const status = document.getElementById("status");
   status.textContent = "Options saved. Refresh tab to apply changes.";
   status.classList.add("active");
@@ -70,7 +84,7 @@ const _showSaveConfirmation = () => {
 };
 
 // Function to hide save confirmation message
-const hideSaveConfirmation = () => {
+const hideSaveConfirmation = (): void => {
   const status = document.getElementById("status");
   status.classList.remove("active");
   setTimeout(() => {
@@ -79,7 +93,7 @@ const hideSaveConfirmation = () => {
 };
 
 // Function to show alert message
-const showAlert = message => {
+const showAlert = (message: string): void => {
   const status = document.getElementById("status");
   status.innerText = message;
   status.classList.add("active");
@@ -93,10 +107,10 @@ const showAlert = message => {
 };
 
 // Function to clear transient lyrics
-const clearTransientLyrics = callback => {
+const clearTransientLyrics = (callback?: () => void): void => {
   chrome.tabs.query({url: "https://music.youtube.com/*"}, tabs => {
     if (tabs.length === 0) {
-      updateCacheInfo();
+      updateCacheInfo(null);
       showAlert("Cache cleared successfully!");
       if (callback && typeof callback === "function") callback();
       return;
@@ -108,7 +122,7 @@ const clearTransientLyrics = callback => {
         completedTabs++;
         if (completedTabs === tabs.length) {
           if (response?.success) {
-            updateCacheInfo();
+            updateCacheInfo(null);
             showAlert("Cache cleared successfully!");
           } else {
             showAlert("Failed to clear cache!");
@@ -120,7 +134,7 @@ const clearTransientLyrics = callback => {
   });
 };
 
-const _formatBytes = (bytes, decimals = 2) => {
+const _formatBytes = (bytes: number, decimals = 2): string => {
   if (!+bytes) return "0 Bytes";
 
   const k = 1024;
@@ -133,7 +147,7 @@ const _formatBytes = (bytes, decimals = 2) => {
 };
 
 // Function to subscribe to cache info updates
-const subscribeToCacheInfo = () => {
+const subscribeToCacheInfo = (): void => {
   chrome.storage.sync.get("cacheInfo", items => {
     updateCacheInfo(items);
   });
@@ -146,7 +160,7 @@ const subscribeToCacheInfo = () => {
 };
 
 // Function to update cache info
-const updateCacheInfo = items => {
+const updateCacheInfo = (items: { cacheInfo: { count: number, size: number } } | null): void => {
   if (!items) {
     showAlert("Nothing to clear!");
     return;
@@ -155,15 +169,15 @@ const updateCacheInfo = items => {
   const cacheCount = document.getElementById("lyrics-count");
   const cacheSize = document.getElementById("cache-size");
 
-  cacheCount.textContent = cacheInfo.count;
+  cacheCount.textContent = cacheInfo.count.toString();
   cacheSize.textContent = _formatBytes(cacheInfo.size);
 };
 
 // Function to restore user options
-const restoreOptions = () => {
+const restoreOptions = (): void => {
   subscribeToCacheInfo();
 
-  const defaultOptions = {
+  const defaultOptions: Options = {
     isLogsEnabled: true,
     isAutoSwitchEnabled: false,
     isAlbumArtEnabled: true,
@@ -186,20 +200,20 @@ const restoreOptions = () => {
 
   chrome.storage.sync.get(defaultOptions, setOptionsInForm);
 
-  document.getElementById("clear-cache").addEventListener("click", clearTransientLyrics);
+  document.getElementById("clear-cache").addEventListener("click", () => clearTransientLyrics());
 };
 
 // Function to set options in form elements
-const setOptionsInForm = items => {
-  document.getElementById("logs").checked = items.isLogsEnabled;
-  document.getElementById("albumArt").checked = items.isAlbumArtEnabled;
-  document.getElementById("autoSwitch").checked = items.isAutoSwitchEnabled;
-  document.getElementById("cursorAutoHide").checked = items.isCursorAutoHideEnabled;
-  document.getElementById("isFullScreenDisabled").checked = items.isFullScreenDisabled;
-  document.getElementById("isStylizedAnimationsEnabled").checked = items.isStylizedAnimationsEnabled;
-  document.getElementById("translate").checked = items.isTranslateEnabled;
-  document.getElementById("translationLanguage").value = items.translationLanguage;
-  document.getElementById("isRomanizationEnabled").checked = items.isRomanizationEnabled;
+const setOptionsInForm = (items: Options): void => {
+  (document.getElementById("logs") as HTMLInputElement).checked = items.isLogsEnabled;
+  (document.getElementById("albumArt") as HTMLInputElement).checked = items.isAlbumArtEnabled;
+  (document.getElementById("autoSwitch") as HTMLInputElement).checked = items.isAutoSwitchEnabled;
+  (document.getElementById("cursorAutoHide") as HTMLInputElement).checked = items.isCursorAutoHideEnabled;
+  (document.getElementById("isFullScreenDisabled") as HTMLInputElement).checked = items.isFullScreenDisabled;
+  (document.getElementById("isStylizedAnimationsEnabled") as HTMLInputElement).checked = items.isStylizedAnimationsEnabled;
+  (document.getElementById("translate") as HTMLInputElement).checked = items.isTranslateEnabled;
+  (document.getElementById("translationLanguage") as HTMLInputElement).value = items.translationLanguage;
+  (document.getElementById("isRomanizationEnabled") as HTMLInputElement).checked = items.isRomanizationEnabled;
 
   const providersListElem = document.getElementById("providers-list");
   providersListElem.innerHTML = "";
@@ -233,7 +247,7 @@ const setOptionsInForm = items => {
     providersListElem.appendChild(providerElem);
   });
 };
-const providerIdToNameMap = {
+const providerIdToNameMap: { [key: string]: string } = {
   "musixmatch-richsync": "Musixmatch (Word Synced)",
   "musixmatch-synced": "Musixmatch (Line Synced)",
   "yt-captions": "Youtube Captions (Line Synced)",
@@ -243,7 +257,7 @@ const providerIdToNameMap = {
   "lrclib-plain": "LRClib (Unsynced)",
 };
 
-function createProviderElem(providerId, checked = true) {
+function createProviderElem(providerId: string, checked = true): HTMLLIElement | null {
   if (!Object.hasOwn(providerIdToNameMap, providerId)) {
     console.warn("Unknown provider ID:", providerId);
     return null;
