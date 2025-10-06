@@ -10,7 +10,7 @@ class Logger {
   }
 
   updateStatus() {
-    getStorage({isLogsEnabled: true}, (items: { isLogsEnabled: boolean }) => {
+    getStorage({isLogsEnabled: true}, (items) => {
       this.enabled = items.isLogsEnabled;
     });
   }

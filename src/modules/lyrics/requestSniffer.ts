@@ -13,8 +13,8 @@ export interface SegmentMap {
 
 export interface LyricsInfo {
   hasLyrics: boolean;
-  lyrics: string;
-  sourceText: string;
+  lyrics: string | null;
+  sourceText: string | null;
 }
 
 interface CounterpartInfo {
@@ -42,20 +42,20 @@ function delay(ms: number): Promise<void> {
  */
 export async function getLyrics(videoId: string, maxRetries = 250): Promise<LyricsInfo> {
   if (videoIdToLyricsMap.has(videoId)) {
-    return videoIdToLyricsMap.get(videoId);
+    return videoIdToLyricsMap.get(videoId)!;
   } else {
     let checkCount = 0;
     return await new Promise(resolve => {
       const checkInterval = setInterval(() => {
         if (videoIdToLyricsMap.has(videoId)) {
           clearInterval(checkInterval);
-          resolve(videoIdToLyricsMap.get(videoId));
+          resolve(videoIdToLyricsMap.get(videoId)!);
         }
         if (counterpartVideoIdMap.get(videoId)) {
-          let counterpart = counterpartVideoIdMap.get(videoId).counterpartVideoId;
-          if (videoIdToLyricsMap.has(counterpart)) {
+          let counterpart = counterpartVideoIdMap.get(videoId)!.counterpartVideoId;
+          if (counterpart && videoIdToLyricsMap.has(counterpart)!) {
             clearInterval(checkInterval);
-            resolve(videoIdToLyricsMap.get(counterpart));
+            resolve(videoIdToLyricsMap.get(counterpart)!);
           }
         }
         if (checkCount > maxRetries) {
@@ -77,7 +77,7 @@ export async function getLyrics(videoId: string, maxRetries = 250): Promise<Lyri
  */
 export async function getMatchingSong(videoId: string, maxCheckCount = 250): Promise<CounterpartInfo | null> {
   if (counterpartVideoIdMap.has(videoId)) {
-    return counterpartVideoIdMap.get(videoId);
+    return counterpartVideoIdMap.get(videoId)!;
   } else {
     let checkCount = 0;
     return await new Promise(resolve => {
@@ -85,7 +85,7 @@ export async function getMatchingSong(videoId: string, maxCheckCount = 250): Pro
         if (counterpartVideoIdMap.has(videoId)) {
           let counterpart = counterpartVideoIdMap.get(videoId);
           clearInterval(checkInterval);
-          resolve(counterpart);
+          resolve(counterpart!);
         }
         if (checkCount > maxCheckCount) {
           clearInterval(checkInterval);
@@ -118,7 +118,8 @@ export function setupRequestSniffer(): void {
     firstRequestMissedVideoId = url.searchParams.get("v");
   }
 
-  document.addEventListener("blyrics-send-response", (event: CustomEvent) => {
+  document.addEventListener("blyrics-send-response", (event: Event) => {
+    if (!(event instanceof CustomEvent)) return;
     let { /** @type string */ url, requestJson, responseJson} = event.detail;
     if (url.includes("https://music.youtube.com/youtubei/v1/next")) {
       let playlistPanelRendererContents =
@@ -140,10 +141,7 @@ export function setupRequestSniffer(): void {
             playlistPanelRendererContent?.playlistPanelVideoWrapperRenderer?.primaryRenderer
               ?.playlistPanelVideoRenderer?.videoId;
 
-          /**
-           * @type {SegmentMap}
-           */
-          let segmentMap =
+          let segmentMap: SegmentMap =
             playlistPanelRendererContent?.playlistPanelVideoWrapperRenderer?.counterpart?.[0]?.segmentMap;
 
           if (counterpartId && primaryId) {
@@ -198,7 +196,7 @@ export function setupRequestSniffer(): void {
 
       videoIdToAlbumMap.set(videoId, album);
       if (counterpartVideoIdMap.has(videoId)) {
-        let counterpart = counterpartVideoIdMap.get(videoId).counterpartVideoId;
+        let counterpart = counterpartVideoIdMap.get(videoId)!.counterpartVideoId;
         if (counterpart) {
           videoIdToAlbumMap.set(counterpart, album);
         }

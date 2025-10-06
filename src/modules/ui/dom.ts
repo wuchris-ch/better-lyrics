@@ -186,11 +186,11 @@ export function flushLoader(showNoSyncAvailable = false): void {
   try {
     const loaderWrapper = document.getElementById(Constants.LYRICS_LOADER_ID);
 
-      if (showNoSyncAvailable) {
-        loaderWrapper.setAttribute("small-loader", "");
-        reflow(loaderWrapper);
-        loaderWrapper.setAttribute("no-sync-available", "");
-      }
+    if (loaderWrapper && showNoSyncAvailable) {
+      loaderWrapper.setAttribute("small-loader", "");
+      reflow(loaderWrapper);
+      loaderWrapper.setAttribute("no-sync-available", "");
+    }
     if (loaderWrapper?.hasAttribute("active")) {
       clearTimeout(AppState.loaderAnimationEndTimeout);
       loaderWrapper.dataset.animatingOut = "true";
@@ -431,6 +431,7 @@ export function injectGetSongInfo(): void {
   s.src = chrome.runtime.getURL("script.js");
   s.id = "blyrics-script";
   s.onload = function () {
+    //@ts-ignore
     this.remove();
   };
   (document.head || document.documentElement).appendChild(s);
@@ -513,8 +514,8 @@ export function tickLyrics(currentTime: number, eventCreationTime: number, isPla
   const tabSelector = document.getElementsByClassName(Constants.TAB_HEADER_CLASS)[1] as HTMLElement;
   console.assert(tabSelector != null);
 
-  const playerState = document.getElementById("player-page").getAttribute("player-ui-state");
-  const isPlayerOpen =
+  const playerState = document.getElementById("player-page")?.getAttribute("player-ui-state");
+  const isPlayerOpen = !playerState ||
     playerState === "PLAYER_PAGE_OPEN" || playerState === "FULLSCREEN" || playerState === "MINIPLAYER_IN_PLAYER_PAGE";
   // Don't tick lyrics if they're not visible
   if (tabSelector.getAttribute("aria-selected") !== "true" || !isPlayerOpen) {
@@ -582,9 +583,8 @@ export function tickLyrics(currentTime: number, eventCreationTime: number, isPla
 
       /**
        * Time in seconds to set up animations. This shouldn't affect any visible effects, just help when the browser stutters
-       * @type {number}
        */
-      let setUpAnimationEarlyTime = 2;
+      let setUpAnimationEarlyTime: number = 2;
 
       if (!isPlaying) {
         setUpAnimationEarlyTime = 0;
@@ -769,7 +769,7 @@ export function lyricsElementAdded(): void {
  * @param artist - Artist name
  */
 export function injectSongAttributes(title: string, artist: string): void {
-  const mainPanel = document.getElementById("main-panel");
+  const mainPanel = document.getElementById("main-panel")!;
   console.assert(mainPanel != null);
   const existingSongInfo = document.getElementById("blyrics-song-info");
   const existingWatermark = document.getElementById("blyrics-watermark");
@@ -810,7 +810,7 @@ export function getResumeScrollElement(): HTMLElement {
     elem.setAttribute("autoscroll-hidden", "true");
     elem.addEventListener("click", () => {
       animEngineState.scrollResumeTime = 0;
-      elem.setAttribute("autoscroll-hidden", "true");
+      elem!.setAttribute("autoscroll-hidden", "true");
     });
 
     (document.querySelector("#side-panel > tp-yt-paper-tabs") as HTMLElement).after(wrapper);

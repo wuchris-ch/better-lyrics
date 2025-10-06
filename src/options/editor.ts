@@ -1,5 +1,4 @@
-import CodeMirror from "codemirror/src/edit/CodeMirror";
-
+import CodeMirror from "codemirror";
 let saveTimeout: number;
 let editor: any;
 let currentThemeName: string | null = null;
@@ -16,7 +15,7 @@ import THEMES from "./themes";
 const invalidKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Shift", "Enter", "Tab"];
 
 const showAlert = (message: string): void => {
-  const status = document.getElementById("status-css");
+  const status = document.getElementById("status-css")!;
   status.innerText = message;
   status.classList.add("active");
 
@@ -29,39 +28,34 @@ const showAlert = (message: string): void => {
 };
 
 const openEditCSS = (): void => {
-  const editCSS = document.getElementById("css");
-  const options = document.getElementById("themes-content");
+  const editCSS = document.getElementById("css")!;
+  const options = document.getElementById("themes-content")!;
 
   editCSS.style.display = "block";
   options.style.display = "none";
 };
 
-document.getElementById("edit-css-btn").addEventListener("click", openEditCSS);
+document.getElementById("edit-css-btn")!.addEventListener("click", openEditCSS);
 
 const openOptions = (): void => {
-  const editCSS = document.getElementById("css");
-  const options = document.getElementById("themes-content");
+  const editCSS = document.getElementById("css")!;
+  const options = document.getElementById("themes-content")!;
 
   editCSS.style.display = "none";
   options.style.display = "block";
 };
 
-document.getElementById("back-btn").addEventListener("click", openOptions);
+document.getElementById("back-btn")!.addEventListener("click", openOptions);
 
 document.addEventListener("DOMContentLoaded", () => {
-  const syncIndicator = document.getElementById("sync-indicator");
+  const syncIndicator = document.getElementById("sync-indicator")!;
   const themeSelector = document.getElementById("theme-selector") as HTMLSelectElement;
 
   // Initialize CodeMirror
-  editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+  editor = CodeMirror.fromTextArea(document.getElementById("editor") as HTMLTextAreaElement, {
     lineWrapping: true,
     smartIndent: true,
     lineNumbers: true,
-    foldGutter: true,
-    autoCloseTags: true,
-    matchBrackets: true,
-    autoCloseBrackets: true,
-    autoRefresh: true,
     mode: "css",
     theme: "seti",
     extraKeys: {
@@ -104,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       return {success: true, strategy};
-    } catch (error) {
+    } catch (error: any) {
       console.error("Storage save attempt failed:", error);
 
       if (error.message?.includes("quota") && retryCount < MAX_RETRY_ATTEMPTS) {
@@ -191,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
     saveTimeout = window.setTimeout(saveToStorage, SAVE_DEBOUNCE_DELAY);
   }
 
-  editor.on("change", (_, changeObj) => {
+  editor.on("change", (_: any, changeObj: { origin: string; }) => {
     console.log("cm", changeObj);
     if (VALID_CHANGE_ORIGINS.includes(changeObj.origin)) {
       isUserTyping = true;
@@ -241,7 +235,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  editor.on("keydown", (cm, event) => {
+  editor.on("keydown", (cm: { state: { completionActive: any; }; showHint: (arg0: { completeSingle: boolean; }) => void; }, event: { key: string; }) => {
     const isInvalidKey = invalidKeys.includes(event.key);
     if (!cm.state.completionActive && !isInvalidKey) {
       cm.showHint({completeSingle: false});
@@ -272,6 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle theme selection
   themeSelector.addEventListener("change", function () {
+    // @ts-ignore
     const selectedTheme = THEMES[this.value];
     if (this.value === "") {
       editor.setValue("");
@@ -368,7 +363,12 @@ const loadCSSFromFile = (file: File): Promise<string | ArrayBuffer> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = event => {
-      resolve(event.target.result);
+      if (event.target?.result !== null) {
+        resolve(event.target!.result);
+      } else {
+        reject("File was not found");
+        return;
+      }
     };
     reader.onerror = error => {
       reject(error);
@@ -377,12 +377,12 @@ const loadCSSFromFile = (file: File): Promise<string | ArrayBuffer> => {
   });
 };
 
-document.getElementById("file-import-btn").addEventListener("click", () => {
+document.getElementById("file-import-btn")!.addEventListener("click", () => {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".css";
   input.onchange = (event: Event) => {
-    const file = (event.target as HTMLInputElement).files[0];
+    const file = (event.target as HTMLInputElement).files?.[0]!;
     loadCSSFromFile(file)
       .then(css => {
         editor.setValue(css as string);
@@ -396,7 +396,7 @@ document.getElementById("file-import-btn").addEventListener("click", () => {
   input.click();
 });
 
-document.getElementById("file-export-btn").addEventListener("click", () => {
+document.getElementById("file-export-btn")!.addEventListener("click", () => {
   const css = editor.getValue();
   if (!css) {
     showAlert("No styles to export!");

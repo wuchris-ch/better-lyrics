@@ -35,7 +35,7 @@ interface AppState {
   queueAlbumArtInjection: boolean;
   shouldInjectAlbumArt: string | boolean;
   queueSongDetailsInjection: boolean;
-  loaderAnimationEndTimeout: number | null;
+  loaderAnimationEndTimeout: number | undefined;
   lastLoadedVideoId: string | null;
   lyricAbortController: AbortController | null;
 }
@@ -52,7 +52,7 @@ export let AppState: AppState = {
   queueAlbumArtInjection: false,
   shouldInjectAlbumArt: "Unknown",
   queueSongDetailsInjection: false,
-  loaderAnimationEndTimeout: null,
+  loaderAnimationEndTimeout: undefined,
   lastLoadedVideoId: null,
   lyricAbortController: null,
 };
