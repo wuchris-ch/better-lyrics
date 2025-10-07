@@ -108,6 +108,7 @@ export function lyricReloader(): void {
  * Handles video changes, lyric injection, and player state updates.
  */
 export function initializeLyrics(): void {
+  // @ts-ignore
   document.addEventListener("blyrics-send-player-time", (event: CustomEvent<PlayerDetails>) => {
     const detail = event.detail;
 

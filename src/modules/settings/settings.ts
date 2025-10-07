@@ -123,7 +123,7 @@ export function hideCursorOnIdle(): void {
 
       function disappearCursor() {
         mouseTimer = null;
-        document.getElementById("layout").setAttribute("cursor-hidden", "");
+        document.getElementById("layout")!.setAttribute("cursor-hidden", "");
         cursorVisible = false;
       }
 
@@ -132,7 +132,7 @@ export function hideCursorOnIdle(): void {
           window.clearTimeout(mouseTimer);
         }
         if (!cursorVisible) {
-          document.getElementById("layout").removeAttribute("cursor-hidden");
+          document.getElementById("layout")!.removeAttribute("cursor-hidden");
           cursorVisible = true;
         }
         mouseTimer = window.setTimeout(disappearCursor, 3000);
@@ -149,7 +149,7 @@ export function hideCursorOnIdle(): void {
       if (mouseTimer) {
         window.clearTimeout(mouseTimer);
       }
-      document.getElementById("layout").removeAttribute("cursor-hidden");
+      document.getElementById("layout")!.removeAttribute("cursor-hidden");
       if (cursorEventListener) {
         document.removeEventListener("mousemove", cursorEventListener);
         cursorEventListener = null;

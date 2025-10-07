@@ -468,8 +468,8 @@ async function lyricLib(providerParameters: ProviderParameters): Promise<void> {
 async function ytLyrics(providerParameters: ProviderParameters): Promise<void> {
   let lyricsObj = await RequestSniffing.getLyrics(providerParameters.videoId);
   if (lyricsObj.hasLyrics) {
-    let lyricsText = lyricsObj.lyrics;
-    let sourceText = lyricsObj.sourceText.substring(8) + " (via YT)";
+    let lyricsText = lyricsObj.lyrics!;
+    let sourceText = lyricsObj.sourceText!.substring(8) + " (via YT)";
 
     let lyricsArray = parsePlainLyrics(lyricsText);
     providerParameters.sourceMap["yt-lyrics"].lyricSourceResult = {

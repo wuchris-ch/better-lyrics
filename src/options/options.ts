@@ -1,7 +1,4 @@
 // Function to save user options
-
-import { browser } from "../../extension.config.js";
-
 import Sortable from "sortablejs";
 
 interface Options {
