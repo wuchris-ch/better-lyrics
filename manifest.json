@@ -34,12 +34,14 @@
         "css/blyrics.css",
         "css/disablestylizedanimations.css",
         "css/themesong.css",
-        "*.js.map"
+        "*.js.map",
+        "src/options/standalone-editor.html"
       ]
     }
   ],
   "chromium:background": {
-    "service_worker": "src/options/background.ts"
+    "service_worker": "src/options/background.ts",
+    "type": "module"
   },
   "gecko:background": {
     "scripts": [
@@ -70,7 +72,7 @@
         "*://music.youtube.com/*"
       ],
       "js": [
-        "earlyInject.js"
+        "public/earlyInject.js"
       ],
       "run_at": "document_start",
       "world": "MAIN"
@@ -80,7 +82,7 @@
         "*://music.youtube.com/*"
       ],
       "js": [
-        "script.js"
+        "public/script.js"
       ],
       "run_at": "document_end",
       "world": "MAIN"
