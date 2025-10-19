@@ -72,5 +72,3 @@ const stopLyricsTick = () => {
 window.addEventListener("unload", stopLyricsTick);
 
 startLyricsTick();
-
-

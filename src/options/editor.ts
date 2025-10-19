@@ -1,6 +1,6 @@
-import {EditorState} from '@codemirror/state';
-import {openSearchPanel, highlightSelectionMatches} from '@codemirror/search';
-import {indentWithTab, history, defaultKeymap, historyKeymap} from '@codemirror/commands';
+import { EditorState } from "@codemirror/state";
+import { openSearchPanel, highlightSelectionMatches } from "@codemirror/search";
+import { indentWithTab, history, defaultKeymap, historyKeymap } from "@codemirror/commands";
 import {
   foldGutter,
   indentOnInput,
@@ -8,9 +8,9 @@ import {
   bracketMatching,
   foldKeymap,
   syntaxHighlighting,
-  defaultHighlightStyle
-} from '@codemirror/language';
-import {closeBrackets, autocompletion, closeBracketsKeymap, completionKeymap} from '@codemirror/autocomplete';
+  defaultHighlightStyle,
+} from "@codemirror/language";
+import { closeBrackets, autocompletion, closeBracketsKeymap, completionKeymap } from "@codemirror/autocomplete";
 import {
   lineNumbers,
   highlightActiveLineGutter,
@@ -21,29 +21,26 @@ import {
   crosshairCursor,
   highlightActiveLine,
   keymap,
-  EditorView, type EditorViewConfig, ViewPlugin
-} from '@codemirror/view';
+  EditorView,
+  type EditorViewConfig,
+  ViewPlugin,
+} from "@codemirror/view";
 
+import { oneDark } from "@codemirror/theme-one-dark";
 
-import {oneDark} from "@codemirror/theme-one-dark";
-
-import {css} from "@codemirror/lang-css";
-
+import { css } from "@codemirror/lang-css";
 
 let saveTimeout: number;
 let editor: EditorView;
 let currentThemeName: string | null = null;
 let isUserTyping = false;
 const SAVE_DEBOUNCE_DELAY = 1000;
-const VALID_CHANGE_ORIGINS = ["undo", "redo", "cut", "paste", "drag", "+delete", "+input", "setValue"];
 
 // Storage quota limits (in bytes)
 const SYNC_STORAGE_LIMIT = 7000; // Leave some buffer under 8KB limit
 const MAX_RETRY_ATTEMPTS = 3;
 
 import THEMES from "./themes";
-
-const invalidKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Shift", "Enter", "Tab"];
 
 const showAlert = (message: string): void => {
   const status = document.getElementById("status-css")!;
@@ -76,8 +73,8 @@ const openOptions = (): void => {
   options.style.display = "block";
 };
 
-document.addEventListener('keydown', function (e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+document.addEventListener("keydown", function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === "s") {
     e.preventDefault(); // Prevent the browser's default save dialog
     saveToStorage();
   }
@@ -112,30 +109,27 @@ function createEditorState(initialContents: string, options = {}) {
       ...completionKeymap,
     ]),
     css(),
-    syntaxHighlighting(defaultHighlightStyle, {fallback: true}),
+    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
     oneDark,
     EditorView.updateListener.of(update => {
       if (update.docChanged) {
-        onChange(update.view.state.doc.toString())
+        onChange(update.view.state.doc.toString());
       }
-    })
+    }),
   ];
-
 
   return EditorState.create({
     doc: initialContents,
-    extensions
+    extensions,
   });
 }
 
 function createEditorView(state: EditorState, parent: Element) {
-  return new EditorView({state, parent});
+  return new EditorView({ state, parent });
 }
-
 
 const themeSelector = document.getElementById("theme-selector") as HTMLSelectElement;
 const syncIndicator = document.getElementById("sync-indicator")!;
-
 
 function onChange(state: string) {
   isUserTyping = true;
@@ -146,7 +140,6 @@ function onChange(state: string) {
   }
   debounceSave();
 }
-
 
 function debounceSave() {
   syncIndicator.style.display = "block";
@@ -161,23 +154,23 @@ const getStorageStrategy = (css: string): "local" | "sync" => {
 };
 
 const saveToStorageWithFallback = async (
-    css: string,
-    isTheme = false,
-    retryCount = 0
+  css: string,
+  isTheme = false,
+  retryCount = 0
 ): Promise<{ success: boolean; strategy?: "local" | "sync"; wasRetry?: boolean; error?: any }> => {
   try {
     const strategy = getStorageStrategy(css);
 
     if (strategy === "local") {
       // Use local storage for large content
-      await chrome.storage.local.set({customCSS: css});
+      await chrome.storage.local.set({ customCSS: css });
       // Clear any sync storage CSS to avoid conflicts
       await chrome.storage.sync.remove("customCSS");
       // Store a flag indicating we're using local storage
-      await chrome.storage.sync.set({cssStorageType: "local"});
+      await chrome.storage.sync.set({ cssStorageType: "local" });
     } else {
       // Use sync storage for smaller content
-      await chrome.storage.sync.set({customCSS: css, cssStorageType: "sync"});
+      await chrome.storage.sync.set({ customCSS: css, cssStorageType: "sync" });
       // Clear any local storage CSS to avoid conflicts
       await chrome.storage.local.remove("customCSS");
     }
@@ -189,24 +182,24 @@ const saveToStorageWithFallback = async (
       currentThemeName = null;
     }
 
-    return {success: true, strategy};
+    return { success: true, strategy };
   } catch (error: any) {
     console.error("Storage save attempt failed:", error);
 
     if (error.message?.includes("quota") && retryCount < MAX_RETRY_ATTEMPTS) {
       // Quota exceeded, try with local storage
       try {
-        await chrome.storage.local.set({customCSS: css});
+        await chrome.storage.local.set({ customCSS: css });
         await chrome.storage.sync.remove("customCSS");
-        await chrome.storage.sync.set({cssStorageType: "local"});
-        return {success: true, strategy: "local", wasRetry: true};
+        await chrome.storage.sync.set({ cssStorageType: "local" });
+        return { success: true, strategy: "local", wasRetry: true };
       } catch (localError) {
         console.error("Local storage fallback failed:", localError);
-        return {success: false, error: localError};
+        return { success: false, error: localError };
       }
     }
 
-    return {success: false, error};
+    return { success: false, error };
   }
 };
 
@@ -223,63 +216,62 @@ function saveToStorage(isTheme = false) {
   }
 
   saveToStorageWithFallback(css, isTheme)
-      .then(result => {
-        if (result.success) {
-          syncIndicator.innerText =
-              result.strategy === "local" ? (result.wasRetry ? "Saved (Large CSS - Local)" : "Saved (Local)") : "Saved!";
-          syncIndicator.classList.add("success");
+    .then(result => {
+      if (result.success) {
+        syncIndicator.innerText =
+          result.strategy === "local" ? (result.wasRetry ? "Saved (Large CSS - Local)" : "Saved (Local)") : "Saved!";
+        syncIndicator.classList.add("success");
 
-          setTimeout(() => {
-            syncIndicator.style.display = "none";
-            syncIndicator.innerText = "Saving...";
-            syncIndicator.classList.remove("success");
-          }, 1000);
-
-          // Send message to all tabs to update CSS
-          try {
-            chrome.runtime
-                .sendMessage({
-                  action: "updateCSS",
-                  css: css,
-                  storageType: result.strategy,
-                })
-                .catch(error => {
-                  console.log("[BetterLyrics] (Safe to ignore) Error sending message:", error);
-                });
-          } catch (err) {
-            console.log(err);
-          }
-        } else {
-          throw result.error;
-        }
-      })
-      .catch(err => {
-        console.error("Error saving to storage:", err);
-
-        let errorMessage = "Something went wrong!";
-        if (err.message?.includes("quota")) {
-          errorMessage = "CSS too large for storage!";
-        }
-
-        syncIndicator.innerText = errorMessage;
-        syncIndicator.classList.add("error");
         setTimeout(() => {
           syncIndicator.style.display = "none";
           syncIndicator.innerText = "Saving...";
-          syncIndicator.classList.remove("error");
-        }, 3000);
-      });
+          syncIndicator.classList.remove("success");
+        }, 1000);
+
+        // Send message to all tabs to update CSS
+        try {
+          chrome.runtime
+            .sendMessage({
+              action: "updateCSS",
+              css: css,
+              storageType: result.strategy,
+            })
+            .catch(error => {
+              console.log("[BetterLyrics] (Safe to ignore) Error sending message:", error);
+            });
+        } catch (err) {
+          console.log(err);
+        }
+      } else {
+        throw result.error;
+      }
+    })
+    .catch(err => {
+      console.error("Error saving to storage:", err);
+
+      let errorMessage = "Something went wrong!";
+      if (err.message?.includes("quota")) {
+        errorMessage = "CSS too large for storage!";
+      }
+
+      syncIndicator.innerText = errorMessage;
+      syncIndicator.classList.add("error");
+      setTimeout(() => {
+        syncIndicator.style.display = "none";
+        syncIndicator.innerText = "Saving...";
+        syncIndicator.classList.remove("error");
+      }, 3000);
+    });
 
   isUserTyping = false;
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM loaded");
   editor = createEditorView(createEditorState("Loading..."), document.getElementById("editor")!);
   document.getElementById("editor-popout-button")?.addEventListener("click", () => {
-    chrome.tabs.create({url: chrome.runtime.getURL("pages/standalone-editor.html")});
-  })
+    chrome.tabs.create({ url: chrome.runtime.getURL("pages/standalone-editor.html") });
+  });
 
   // Enhanced loading function to check both storage types
   const loadCustomCSS = async (): Promise<string> => {
