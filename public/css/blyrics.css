@@ -171,26 +171,44 @@
 	cursor: default;
 }
 
-.blyrics-container > div {
+.blyrics-background-lyric {
+	order: 1;
+	font-size: 0.8em;
+}
+
+:not(.blyrics-background-lyric) {
+	order: 0;
+}
+
+.blyrics--line {
 	transform: scale(var(--blyrics-scale));
 	transition-property: transform;
 	transition-duration: var(--blyrics-scale-transition-duration);
 	transition-timing-function: ease;
+	display: flex;
+	flex-flow: row wrap;
+	align-items: start;
+	align-content: flex-start;
 }
 
-.blyrics-container > div.blyrics--animating {
+.blyrics--line.blyrics--animating {
 	transform: scale(var(--blyrics-active-scale));
 	transition-delay: var(--blyrics-anim-delay);
 }
 
-.blyrics-container > div > span {
+.blyrics--line > span {
 	color: var(--blyrics-lyric-inactive-color);
 	display: inline-block;
 	white-space: pre-wrap;
 	transform: translateY(0px);
 }
 
-.blyrics-container > div > span.blyrics--animating {
+.blyrics--break {
+	flex-basis: 100%;
+	height: 0;
+}
+
+.blyrics--line > span.blyrics--animating {
 	animation: blyrics-wobble var(--blyrics-wobble-duration) forwards ease;
 	animation-delay: var(--blyrics-anim-delay);
 }

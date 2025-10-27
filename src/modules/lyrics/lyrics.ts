@@ -526,6 +526,11 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
       });
     }
 
+    //Makes bg lyrics go to the next line
+    let breakElm: HTMLSpanElement = document.createElement("span");
+    breakElm.classList.add("blyrics--break");
+    lyricElement.appendChild(breakElm);
+
     lyricElement.dataset.time = String(line.time);
     lyricElement.dataset.duration = String(line.duration);
     lyricElement.dataset.lineNumber = String(lineIndex);
@@ -580,17 +585,15 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
           if (item.words.trim() !== "♪" && item.words.trim() !== "") {
             const result = await Translation.translateTextIntoRomaji(usableLang, item.words);
             if (result) {
+              let breakElm: HTMLSpanElement = document.createElement("span");
+              breakElm.classList.add("blyrics--break");
+              breakElm.style.order = "4";
+              lyricElement.appendChild(breakElm);
+
+
               romanizedLine.textContent = result ? "\n" + result : "\n";
-
-              let translatedLine = Array.from(lyricElement.children).filter(part =>
-                part.classList.contains(Constants.TRANSLATED_LYRICS_CLASS)
-              );
-
-              if (translatedLine.length > 0) {
-                lyricElement.insertBefore(romanizedLine, translatedLine[0]);
-              } else {
-                lyricElement.appendChild(romanizedLine);
-              }
+              romanizedLine.style.order = "5"
+              lyricElement.appendChild(romanizedLine);
               DOM.lyricsElementAdded();
             }
           }
@@ -617,9 +620,16 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
               const existingTranslatedLine = lyricElement.querySelector("." + Constants.TRANSLATED_LYRICS_CLASS);
               if (existingTranslatedLine) {
                 existingTranslatedLine.remove();
+              } else {
+                let breakElm: HTMLSpanElement = document.createElement("span");
+                breakElm.classList.add("blyrics--break");
+                breakElm.style.order = "6";
+                lyricElement.appendChild(breakElm);
               }
               translatedLine.textContent = "\n" + result.translatedText;
+              translatedLine.style.order = "7"
               lyricElement.appendChild(translatedLine);
+
               DOM.lyricsElementAdded();
             }
           }

@@ -10,7 +10,7 @@ interface BLyricsApiResponse {
 }
 
 export interface ApiLyric {
-  agent: string;
+  agent?: string;
   durationMs: string;
   endTimeMs: string;
   startTimeMs: string;
