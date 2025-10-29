@@ -2,64 +2,65 @@ import type { Lyric, LyricPart, LyricsArray, LyricSourceResult, ProviderParamete
 import * as Constants from "@constants";
 import { type X2jOptions, XMLParser } from "fast-xml-parser";
 import type {
-    SpanElement,
-    DivElement,
-    ParagraphElementOrBackground,
-    TtmlRoot
+  SpanElement,
+  DivElement,
+  ParagraphElementOrBackground,
+  TtmlRoot,
 } from "@modules/lyrics/providers/blyrics/blyrics-types";
 import { parseTime } from "@modules/lyrics/providers/lrcUtils";
 
-
 function parseLyricPart(p: ParagraphElementOrBackground[], beginTime: number) {
-    let text = "";
-    let parts: LyricPart[] = [];
-    let isWordSynced = false;
+  let text = "";
+  let parts: LyricPart[] = [];
+  let isWordSynced = false;
 
-    p.forEach(p => {
-        let isBackground = false;
-        let localP: SpanElement[] = [p];
+  p.forEach(p => {
+    let isBackground = false;
+    let localP: SpanElement[] = [p];
 
-        if (p[":@"] && p[":@"]["@_role"] === "x-bg") {
-            // traverse one span in. This is a bg lyric
-            isBackground = true;
-            localP = p.span!;
-        }
-
-        for (let subParts of localP) {
-            if (subParts["#text"]) {
-                text += subParts["#text"];
-                let lastPart = parts[parts.length - 1];
-                parts.push({
-                    startTimeMs: lastPart ? lastPart.startTimeMs + lastPart.durationMs : beginTime,
-                    durationMs: 0,
-                    words: subParts["#text"],
-                    isBackground,
-                });
-            } else if (subParts.span) {
-                let spanText = subParts.span[0]["#text"]!;
-                let startTimeMs = parseTime(subParts[":@"]["@_begin"]);
-                let endTimeMs = parseTime(subParts[":@"]["@_end"]);
-
-                parts.push({
-                    startTimeMs,
-                    durationMs: endTimeMs - startTimeMs,
-                    isBackground,
-                    words: spanText,
-                });
-                text += spanText;
-
-                isWordSynced = true;
-            }
-        }
-    });
-
-    if (!isWordSynced) {
-        parts = [];
+    if (p[":@"] && p[":@"]["@_role"] === "x-bg") {
+      // traverse one span in. This is a bg lyric
+      isBackground = true;
+      localP = p.span!;
     }
 
-    return {
-        parts, text, isWordSynced
+    for (let subParts of localP) {
+      if (subParts["#text"]) {
+        text += subParts["#text"];
+        let lastPart = parts[parts.length - 1];
+        parts.push({
+          startTimeMs: lastPart ? lastPart.startTimeMs + lastPart.durationMs : beginTime,
+          durationMs: 0,
+          words: subParts["#text"],
+          isBackground,
+        });
+      } else if (subParts.span) {
+        let spanText = subParts.span[0]["#text"]!;
+        let startTimeMs = parseTime(subParts[":@"]["@_begin"]);
+        let endTimeMs = parseTime(subParts[":@"]["@_end"]);
+
+        parts.push({
+          startTimeMs,
+          durationMs: endTimeMs - startTimeMs,
+          isBackground,
+          words: spanText,
+        });
+        text += spanText;
+
+        isWordSynced = true;
+      }
     }
+  });
+
+  if (!isWordSynced) {
+    parts = [];
+  }
+
+  return {
+    parts,
+    text,
+    isWordSynced,
+  };
 }
 export default async function bLyrics(providerParameters: ProviderParameters): Promise<void> {
   // Fetch from the primary API if cache is empty or invalid
@@ -126,7 +127,7 @@ export default async function bLyrics(providerParameters: ProviderParameters): P
 
     let partParse = parseLyricPart(line.p, beginTimeMs);
     if (partParse.isWordSynced) {
-        isWordSynced = true;
+      isWordSynced = true;
     }
 
     lyrics.push({
@@ -135,63 +136,60 @@ export default async function bLyrics(providerParameters: ProviderParameters): P
       parts: partParse.parts,
       startTimeMs: beginTimeMs,
       words: partParse.text,
-        romanization: undefined,
-        timedRomanization: undefined,
-        translation: undefined,
-
+      romanization: undefined,
+      timedRomanization: undefined,
+      translation: undefined,
     });
   });
 
   let metadata = ttHead[0].metadata.find(e => e.iTunesMetadata);
   if (metadata) {
-      let translations = metadata.iTunesMetadata!.find(e => e.translations);
-      let transliterations = metadata.iTunesMetadata!.find(e => e.transliterations);
+    let translations = metadata.iTunesMetadata!.find(e => e.translations);
+    let transliterations = metadata.iTunesMetadata!.find(e => e.transliterations);
 
-      console.log("metadata", metadata);
-      console.log("translations", translations);
-      console.log("transliterations", transliterations);
+    console.log("metadata", metadata);
+    console.log("translations", translations);
+    console.log("transliterations", transliterations);
 
+    if (translations) {
+      let lang = translations.translations![0][":@"]["@_lang"];
+      translations.translations![0].translation.forEach((translation, i) => {
+        let text = translation.text[0]["#text"];
+        let line = translation[":@"]["@_for"];
+        console.log("translation", lang, line, text);
 
-      if (translations) {
-          let lang = translations.translations![0][":@"]["@_lang"];
-          translations.translations![0].translation.forEach((translation, i) => {
-              let text = translation.text[0]["#text"];
-              let line = translation[":@"]["@_for"];
-              console.log("translation", lang, line, text)
+        if (lang && text && line && line.startsWith("L")) {
+          let lineIndex = Number(line.substring(1)) - 1;
+          if (lineIndex < lyrics.length) {
+            console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
+            lyrics[lineIndex].translation = {
+              text,
+              lang,
+            };
+            console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
+          }
+        }
+      });
+    }
 
-              if (lang && text && line && line.startsWith("L")) {
-                  let lineIndex = Number(line.substring(1)) - 1;
-                  if (lineIndex < lyrics.length) {
-                      console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
-                      lyrics[lineIndex].translation = {
-                          text, lang
-                      }
-                      console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
-                  }
-              }
+    if (transliterations) {
+      transliterations.transliterations![0].transliteration.forEach((transliteration, i) => {
+        let line = transliteration[":@"]["@_for"];
+        if (line && line.startsWith("L")) {
+          let lineIndex = Number(line.substring(1)) - 1;
+          if (lineIndex < lyrics.length) {
+            let beginTime = lyrics[lineIndex].startTimeMs;
+            let parseResult = parseLyricPart(transliteration.text, beginTime);
+            console.log("transliteration", line, parseResult);
 
-          })
-      }
-
-      if (transliterations) {
-          transliterations.transliterations![0].transliteration.forEach((transliteration, i) => {
-              let line = transliteration[":@"]["@_for"];
-              if (line && line.startsWith("L")) {
-                  let lineIndex = Number(line.substring(1)) - 1;
-                  if (lineIndex < lyrics.length) {
-                      let beginTime = lyrics[lineIndex].startTimeMs;
-                      let parseResult = parseLyricPart(transliteration.text, beginTime);
-                      console.log("transliteration", line, parseResult);
-
-                      console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
-                      lyrics[lineIndex].romanization = parseResult.text;
-                      lyrics[lineIndex].timedRomanization = parseResult.parts;
-                      console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
-
-                  }
-              }
-          })
-      }
+            console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
+            lyrics[lineIndex].romanization = parseResult.text;
+            lyrics[lineIndex].timedRomanization = parseResult.parts;
+            console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
+          }
+        }
+      });
+    }
   }
 
   console.log(lyrics);

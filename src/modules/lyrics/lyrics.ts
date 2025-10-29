@@ -20,7 +20,7 @@ import type { LyricSourceResult, ProviderParameters } from "./providers/shared";
 import type { CubeyLyricSourceResult } from "./providers/cubey";
 import type { YTLyricSourceResult } from "./providers/yt";
 import { BACKGROUND_LYRIC_CLASS } from "@constants";
-import {it} from "node:test";
+import { it } from "node:test";
 
 /** Current version of the lyrics cache format */
 const LYRIC_CACHE_VERSION = "1.2.0";
@@ -573,10 +573,7 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
       lyricElement.dataset.romanized = "true";
     }
 
-    let translatedResult = Translation.getTranslationFromCache(
-      item.words,
-      Translation.getCurrentTranslationLanguage()
-    );
+    let translatedResult = Translation.getTranslationFromCache(item.words, Translation.getCurrentTranslationLanguage());
     if (translatedResult) {
       let breakElm: HTMLSpanElement = document.createElement("span");
       breakElm.classList.add("blyrics--break");
@@ -598,7 +595,6 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
         romanizedLine.classList.add(Constants.ROMANIZED_LYRICS_CLASS);
 
         if (item.timedRomanization) {
-
           let lyricElementsBuffer = [] as HTMLSpanElement[];
 
           item.timedRomanization.forEach(part => {
@@ -691,7 +687,7 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
               result = {
                 originalLanguage: item.translation.lang,
                 translatedText: item.translation.text,
-              }
+              };
             } else {
               result = await Translation.translateText(item.words, target_language);
             }
@@ -762,7 +758,6 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
   AppState.areLyricsLoaded = true;
 }
 
-
 /**
  * Take elements from the buffer and group them together to control where wrapping happens
  * @param lyricElement element to push to
@@ -796,8 +791,8 @@ function groupByWordAndInsert(lyricElement: HTMLDivElement, lyricElementsBuffer:
       wordGroupBuffer.push(part);
     }
     if (
-        (part.textContent.length > 0 && breakChar.test(part.textContent[part.textContent.length - 1])) ||
-        isNonMatchingType
+      (part.textContent.length > 0 && breakChar.test(part.textContent[part.textContent.length - 1])) ||
+      isNonMatchingType
     ) {
       pushWordGroupBuffer();
     }

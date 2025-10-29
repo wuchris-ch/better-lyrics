@@ -152,7 +152,7 @@ interface TransliterationContainer {
  */
 interface ITunesMetadata {
   // Set to `any[]` or this structure, as one example showed `Array<any>`
-  translations?: (TranslationContainer)[];
+  translations?: TranslationContainer[];
   songwriters?: SongwriterContainer[];
   transliterations?: TransliterationContainer[]; // Optional
 }

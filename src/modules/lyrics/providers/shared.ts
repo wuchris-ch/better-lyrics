@@ -60,7 +60,7 @@ export interface Lyric {
   durationMs: number;
   parts?: LyricPart[];
   agent?: string;
-  translation?: ({ text: string, lang: string});
+  translation?: { text: string; lang: string };
   romanization?: string;
   timedRomanization?: LyricPart[];
 }
