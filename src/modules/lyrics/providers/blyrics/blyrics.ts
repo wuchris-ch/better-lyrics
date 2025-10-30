@@ -1,9 +1,8 @@
-import type { Lyric, LyricPart, LyricsArray, LyricSourceResult, ProviderParameters } from "../shared";
+import type { Lyric, LyricPart, LyricSourceResult, ProviderParameters } from "../shared";
 import * as Constants from "@constants";
 import { type X2jOptions, XMLParser } from "fast-xml-parser";
 import type {
   SpanElement,
-  DivElement,
   ParagraphElementOrBackground,
   TtmlRoot,
 } from "@modules/lyrics/providers/blyrics/blyrics-types";
@@ -100,11 +99,7 @@ export default async function bLyrics(providerParameters: ProviderParameters): P
   const parser = new XMLParser(options);
 
   let responseString: string = await response.json().then(json => json.ttml);
-  console.log(responseString);
-
-  // 2. Parse the XML into the "raw" object
   const rawObj = (await parser.parse(responseString)) as TtmlRoot;
-  console.log(rawObj);
 
   let lyrics = [] as Lyric[];
 
@@ -114,16 +109,11 @@ export default async function bLyrics(providerParameters: ProviderParameters): P
   const ttBody = ttBodyContainer.body!;
   const ttMeta = ttBodyContainer[":@"];
 
-  console.log("head", ttHead);
-  console.log("body", ttBody);
-  console.log("meta", ttMeta);
-
   const lines = ttBody.flatMap(e => e.div);
-  console.log("lines", lines);
 
   let isWordSynced = false;
 
-  lines.forEach((line, i) => {
+  lines.forEach(line => {
     let meta = line[":@"];
     let beginTimeMs = parseTime(meta["@_begin"]);
     let endTimeMs = parseTime(meta["@_end"]);
@@ -150,26 +140,19 @@ export default async function bLyrics(providerParameters: ProviderParameters): P
     let translations = metadata.iTunesMetadata!.find(e => e.translations);
     let transliterations = metadata.iTunesMetadata!.find(e => e.transliterations);
 
-    console.log("metadata", metadata);
-    console.log("translations", translations);
-    console.log("transliterations", transliterations);
-
     if (translations && translations.translations && translations.translations.length > 0) {
       let lang = translations.translations[0][":@"]["@_lang"];
-      translations.translations[0].translation.forEach((translation, i) => {
+      translations.translations[0].translation.forEach(translation => {
         let text = translation.text[0]["#text"];
         let line = translation[":@"]["@_for"];
-        console.log("translation", lang, line, text);
 
         if (lang && text && line && line.startsWith("L")) {
           let lineIndex = Number(line.substring(1)) - 1;
           if (lineIndex < lyrics.length) {
-            console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
             lyrics[lineIndex].translation = {
               text,
               lang,
             };
-            console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
           }
         }
       });
@@ -183,19 +166,14 @@ export default async function bLyrics(providerParameters: ProviderParameters): P
           if (lineIndex < lyrics.length) {
             let beginTime = lyrics[lineIndex].startTimeMs;
             let parseResult = parseLyricPart(transliteration.text, beginTime, false);
-            console.log("transliteration", line, parseResult);
 
-            console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
             lyrics[lineIndex].romanization = parseResult.text;
             lyrics[lineIndex].timedRomanization = parseResult.parts;
-            console.log(JSON.parse(JSON.stringify(lyrics[lineIndex])));
           }
         }
       });
     }
   }
-
-  console.log(lyrics);
 
   let result: LyricSourceResult = {
     cacheAllowed: true,
@@ -206,8 +184,6 @@ export default async function bLyrics(providerParameters: ProviderParameters): P
     sourceHref: "https://boidu.dev/",
   };
 
-  console.log("res", result);
-
   if (isWordSynced) {
     providerParameters.sourceMap["bLyrics-richsynced"].lyricSourceResult = result;
     providerParameters.sourceMap["bLyrics-synced"].lyricSourceResult = null;
@@ -215,9 +191,6 @@ export default async function bLyrics(providerParameters: ProviderParameters): P
     providerParameters.sourceMap["bLyrics-richsynced"].lyricSourceResult = null;
     providerParameters.sourceMap["bLyrics-synced"].lyricSourceResult = result;
   }
-
-  // providerParameters.sourceMap["bLyrics-richsynced"].lyricSourceResult = null;
-  // providerParameters.sourceMap["bLyrics-synced"].lyricSourceResult = null;
 
   providerParameters.sourceMap["bLyrics-synced"].filled = true;
   providerParameters.sourceMap["bLyrics-richsynced"].filled = true;
