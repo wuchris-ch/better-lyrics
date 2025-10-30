@@ -3,7 +3,6 @@
  * Manages lyrics fetching, caching, processing, and rendering.
  */
 
-/** @import {SegmentMap, ProviderParameters} from './providers.js' */
 
 import * as Utils from "@utils";
 import * as Constants from "@constants";
@@ -245,8 +244,7 @@ export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): 
     const allZero = lyrics.lyrics.every(item => item.startTimeMs === 0);
 
     if (!allZero) {
-      for (let lyricKey in lyrics.lyrics) {
-        let lyric = lyrics.lyrics[lyricKey];
+      for (let lyric of lyrics.lyrics) {
         let lastTimeChange = 0;
         for (let segment of segmentMap.segment) {
           if (lyric.startTimeMs >= segment.counterpartVideoStartTimeMilliseconds) {
@@ -261,6 +259,11 @@ export async function createLyrics(detail: PlayerDetails, signal: AbortSignal): 
           lyric.parts.forEach(part => {
             part.startTimeMs = Number(part.startTimeMs) + lastTimeChange;
           });
+        }
+        if (lyric.timedRomanization) {
+          lyric.timedRomanization.forEach(part => {
+            part.startTimeMs = Number(part.startTimeMs) + lastTimeChange
+          })
         }
       }
     }
@@ -590,7 +593,6 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
 
     langPromise.then(source_language => {
       Translation.onRomanizationEnabled(async () => {
-        if (lyricElement.dataset.romanized === "true") return;
         let romanizedLine = document.createElement("div");
         romanizedLine.classList.add(Constants.ROMANIZED_LYRICS_CLASS);
 
@@ -629,10 +631,16 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
 
           groupByWordAndInsert(romanizedLine, lyricElementsBuffer);
 
-          let breakElm: HTMLSpanElement = document.createElement("span");
-          breakElm.classList.add("blyrics--break");
-          breakElm.style.order = "4";
-          lyricElement.appendChild(breakElm);
+          const existingRomanizedLine = lyricElement.querySelector("." + Constants.ROMANIZED_LYRICS_CLASS);
+          if (existingRomanizedLine) {
+            existingRomanizedLine.remove();
+          } else {
+            let breakElm: HTMLSpanElement = document.createElement("span");
+            breakElm.classList.add("blyrics--break");
+            breakElm.style.order = "4";
+            lyricElement.appendChild(breakElm);
+          }
+
 
           romanizedLine.style.order = "5";
           lyricElement.appendChild(romanizedLine);
@@ -640,6 +648,7 @@ function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible = false
           return;
         }
 
+        if (lyricElement.dataset.romanized === "true") return;
         let isNonLatin = containsNonLatin(item.words);
         if (Constants.romanizationLanguages.includes(source_language) || containsNonLatin(item.words)) {
           let usableLang = source_language;

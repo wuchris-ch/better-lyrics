@@ -179,6 +179,9 @@
 
 .blyrics-background-lyric {
 	order: 2;
+}
+
+.blyrics--line > span > span.blyrics-background-lyric {
 	font-size: 0.8em;
 	font-style: italic;
 }
@@ -612,11 +615,9 @@
 }
 
 .blyrics--romanized > span {
+	color: var(--blyrics-lyric-inactive-color);
+	display: inline-block;
 	white-space: pre-wrap;
-}
-
-.blyrics--romanized > span > span {
-	white-space: nowrap;
 }
 
 /* Romanization */
