@@ -169,6 +169,8 @@
 	flex-flow: row wrap;
 	align-items: start;
 	align-content: flex-start;
+	padding-left: 0.25em;
+	padding-right: 0.25em;
 }
 
 .blyrics--line.blyrics--animating {

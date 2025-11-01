@@ -16,6 +16,11 @@ interface CustomTheme {
 
 const themes: Theme[] = [
   {
+    name: "Default",
+    author: "BetterLyrics",
+    path: "Default.css"
+  },
+  {
     name: "Spotlight",
     author: "BetterLyrics",
     link: "https://twitter.com/boidushya",
