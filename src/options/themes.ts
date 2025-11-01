@@ -8,6 +8,12 @@ interface Theme {
   path: string;
 }
 
+interface CustomTheme {
+  name: string;
+  css: string;
+  timestamp: number;
+}
+
 const themes: Theme[] = [
   {
     name: "Spotlight",
@@ -59,4 +65,54 @@ const themes: Theme[] = [
   },
 ];
 
+export async function getCustomThemes(): Promise<CustomTheme[]> {
+  const result = await chrome.storage.local.get("customThemes");
+  return result.customThemes || [];
+}
+
+export async function saveCustomTheme(name: string, css: string): Promise<void> {
+  const customThemes = await getCustomThemes();
+  const existingIndex = customThemes.findIndex(theme => theme.name === name);
+
+  const newTheme: CustomTheme = {
+    name,
+    css,
+    timestamp: Date.now(),
+  };
+
+  if (existingIndex !== -1) {
+    customThemes[existingIndex] = newTheme;
+  } else {
+    customThemes.push(newTheme);
+  }
+
+  await chrome.storage.local.set({ customThemes });
+}
+
+export async function deleteCustomTheme(name: string): Promise<void> {
+  const customThemes = await getCustomThemes();
+  const filtered = customThemes.filter(theme => theme.name !== name);
+  await chrome.storage.local.set({ customThemes: filtered });
+}
+
+export async function renameCustomTheme(oldName: string, newName: string): Promise<void> {
+  const customThemes = await getCustomThemes();
+  const theme = customThemes.find(t => t.name === oldName);
+
+  if (!theme) {
+    throw new Error(`Theme "${oldName}" not found`);
+  }
+
+  const nameExists = customThemes.some(t => t.name === newName && t.name !== oldName);
+  if (nameExists) {
+    throw new Error(`Theme "${newName}" already exists`);
+  }
+
+  theme.name = newName;
+  theme.timestamp = Date.now();
+
+  await chrome.storage.local.set({ customThemes });
+}
+
 export default themes;
+export type { Theme, CustomTheme };

@@ -1,9 +1,9 @@
-import * as Utils from "@utils";
 import * as Constants from "@constants";
-import ytLyrics, { type YTLyricSourceResult } from "./yt";
+import * as Utils from "@utils";
+import bLyrics from "./blyrics/blyrics";
 import cubey, { type CubeyLyricSourceResult } from "./cubey";
 import lyricLib from "./lrclib";
-import bLyrics from "./blyrics/blyrics";
+import ytLyrics, { type YTLyricSourceResult } from "./yt";
 import { ytCaptions } from "./ytCaptions";
 
 interface AudioTrackData {
@@ -137,12 +137,12 @@ export function initProviders(): void {
 }
 
 const sourceKeyToFillFn = {
+  "bLyrics-richsynced": bLyrics,
+  "bLyrics-synced": bLyrics,
   "musixmatch-richsync": cubey,
   "musixmatch-synced": cubey,
   "lrclib-synced": lyricLib,
   "lrclib-plain": lyricLib,
-  "bLyrics-richsynced": bLyrics,
-  "bLyrics-synced": bLyrics,
   "yt-captions": ytCaptions,
   "yt-lyrics": ytLyrics,
 } as const;

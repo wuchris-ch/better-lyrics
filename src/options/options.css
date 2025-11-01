@@ -240,7 +240,7 @@ select option {
 #editor-container {
     position: relative;
     width: 100%;
-    height: 300px;
+    height: 176px;
     box-sizing: border-box;
 }
 
@@ -323,6 +323,7 @@ select option {
     display: flex;
     align-items: center;
     justify-content: start;
+    flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 1rem;
 }
@@ -674,4 +675,110 @@ hr {
 
 .cm-gutter-lint{
 	width: 0.5em !important;
+}
+
+.theme-name-display {
+  color: rgba(255, 255, 255, .75);
+  align-items: center;
+  gap: .5rem;
+  display: none;
+  border-radius: 0.75rem 0.75rem 0 0;
+  width: calc(100% - 1rem);
+  background: rgba(255, 255, 255, 0.01);
+  padding: .5rem;
+  margin-top: -0.5rem;
+  box-shadow: inset 0 1px 2px 0px rgba(255, 255, 255, 0.05);
+}
+
+.theme-name-display.active {
+	display: flex;
+}
+
+.theme-name-display.standalone {
+	margin-top: 0;
+	border-radius: 0;
+}
+
+.theme-name-wrapper{
+	display: flex;
+	align-items:center;
+	gap: 0.5rem;
+}
+
+.theme-name-wrapper > svg{
+	padding: 0 0.5rem;
+}
+
+.theme-name-container {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	flex: 1;
+}
+
+.theme-btn-container {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.theme-name-text {
+	cursor: text;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items:center;
+  gap: .5rem;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.edit-theme-btn,
+.delete-theme-btn {
+	border: none;
+	cursor: pointer;
+	padding: 0.2rem;
+	transition: color 0.2s, background 0.2s;
+	height: 2rem;
+	width: 2.375rem;
+	margin: 0;
+	display: none;
+	place-items: center;
+	background: rgba(255, 255, 255, .05);
+	border-radius: .5rem;
+	gap: .5rem;
+	font-size: .9rem;
+	box-shadow: inset 0 .75px rgba(255, 255, 255, .1);
+}
+
+.edit-theme-btn {
+	border-radius: 0.5rem 0.25rem 0.25rem 0.5rem;
+	color: rgba(255, 255, 255, 0.6);
+}
+
+.edit-theme-btn.active {
+	display: grid;
+}
+
+.edit-theme-btn:hover {
+	color: rgba(255, 255, 255, 1);
+}
+
+.delete-theme-btn {
+	border-radius: 0.25rem 0.5rem 0.5rem 0.25rem;
+	color: rgba(255, 100, 100, 0.8);
+}
+
+.delete-theme-btn.active {
+	display: grid;
+}
+
+.delete-theme-btn:hover {
+	color: rgba(255, 100, 100, 1);
+}
+
+.edit-theme-btn svg,
+.delete-theme-btn svg {
+	width: 0.875rem;
+	height: 0.875rem;
 }
