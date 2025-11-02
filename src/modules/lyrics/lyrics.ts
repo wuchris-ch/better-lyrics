@@ -3,25 +3,25 @@
  * Manages lyrics fetching, caching, processing, and rendering.
  */
 
-import * as Utils from "@utils";
 import * as Constants from "@constants";
-import type { SegmentMap } from "./requestSniffer";
-import * as RequestSniffer from "./requestSniffer";
-import * as RequestSniffing from "./requestSniffer";
-import * as DOM from "@modules/ui/dom";
-import * as Translation from "./translation";
-import type { LyricSourceResult, ProviderParameters } from "./providers/shared";
-import * as LyricProviders from "./providers/shared";
 import * as Storage from "@core/storage";
+import { injectLyrics } from "@modules/lyrics/injectLyrics";
+import { stringSimilarity } from "@modules/lyrics/lyricParseUtils";
+import * as DOM from "@modules/ui/dom";
+import * as Utils from "@utils";
 import type { PlayerDetails } from "@/index";
 import { AppState } from "@/index";
 import type { CubeyLyricSourceResult } from "./providers/cubey";
+import type { LyricSourceResult, ProviderParameters } from "./providers/shared";
+import * as LyricProviders from "./providers/shared";
 import type { YTLyricSourceResult } from "./providers/yt";
-import { stringSimilarity } from "@modules/lyrics/lyricParseUtils";
-import { injectLyrics } from "@modules/lyrics/injectLyrics";
+import type { SegmentMap } from "./requestSniffer";
+import * as RequestSniffer from "./requestSniffer";
+import * as RequestSniffing from "./requestSniffer";
+import * as Translation from "./translation";
 
 /** Current version of the lyrics cache format */
-const LYRIC_CACHE_VERSION = "1.2.0";
+const LYRIC_CACHE_VERSION = "1.3.0";
 
 export type LyricSourceResultWithMeta = LyricSourceResult & {
   song: string;
