@@ -1,3 +1,7 @@
+// ============================================================================
+// IMPORTS
+// ============================================================================
+
 import {
   acceptCompletion,
   autocompletion,
@@ -8,7 +12,7 @@ import {
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { css } from "@codemirror/lang-css";
 import { bracketMatching, foldGutter, foldKeymap, indentOnInput, indentUnit } from "@codemirror/language";
-import { type Diagnostic, linter, lintGutter, lintKeymap } from "@codemirror/lint";
+import { linter, type Diagnostic, lintGutter, lintKeymap } from "@codemirror/lint";
 import { highlightSelectionMatches } from "@codemirror/search";
 import { EditorState } from "@codemirror/state";
 import {
@@ -24,21 +28,17 @@ import {
   tooltips,
 } from "@codemirror/view";
 import { materialDark } from "@fsegurai/codemirror-theme-material-dark";
+import THEMES, { deleteCustomTheme, getCustomThemes, renameCustomTheme, saveCustomTheme } from "./themes";
 
-let saveTimeout: number;
-let editor: EditorView;
-let currentThemeName: string | null = null;
-let isUserTyping = false;
-let saveCount = 0;
-const SAVE_DEBOUNCE_DELAY = 1000;
+// ============================================================================
+// TYPE DECLARATIONS
+// ============================================================================
 
-const modalOverlay = document.getElementById("modal-overlay") as HTMLElement;
-const modalTitle = document.getElementById("modal-title") as HTMLElement;
-const modalMessage = document.getElementById("modal-message") as HTMLElement;
-const modalInput = document.getElementById("modal-input") as HTMLInputElement;
-const modalConfirmBtn = document.getElementById("modal-confirm") as HTMLButtonElement;
-const modalCancelBtn = document.getElementById("modal-cancel") as HTMLButtonElement;
-const modalCloseBtn = document.getElementById("modal-close") as HTMLButtonElement;
+declare global {
+  interface Window {
+    stylelint: any;
+  }
+}
 
 interface ModalOptions {
   title: string;
@@ -50,6 +50,114 @@ interface ModalOptions {
   confirmDanger?: boolean;
   showInput?: boolean;
 }
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const SAVE_DEBOUNCE_DELAY = 1000;
+const SAVE_CUSTOM_THEME_DEBOUNCE = 2000;
+const SYNC_STORAGE_LIMIT = 7000;
+const MAX_RETRY_ATTEMPTS = 3;
+
+const stylelintConfig = {
+  rules: {
+    "annotation-no-unknown": true,
+    "at-rule-descriptor-no-unknown": true,
+    "at-rule-descriptor-value-no-unknown": true,
+    "at-rule-no-deprecated": true,
+    "at-rule-no-unknown": true,
+    "at-rule-prelude-no-invalid": [true, { ignoreAtRules: ["media"] }],
+    "block-no-empty": true,
+    "comment-no-empty": true,
+    "custom-property-no-missing-var-function": true,
+    "declaration-block-no-duplicate-custom-properties": true,
+    "declaration-block-no-duplicate-properties": [
+      true,
+      {
+        ignore: ["consecutive-duplicates-with-different-syntaxes"],
+      },
+    ],
+    "declaration-block-no-shorthand-property-overrides": true,
+    "declaration-property-value-keyword-no-deprecated": true,
+    "declaration-property-value-no-unknown": true,
+    "font-family-no-duplicate-names": true,
+    "font-family-no-missing-generic-family-keyword": true,
+    "function-calc-no-unspaced-operator": true,
+    "keyframe-block-no-duplicate-selectors": true,
+    "keyframe-declaration-no-important": true,
+    "media-feature-name-no-unknown": true,
+    "media-feature-name-value-no-unknown": true,
+    "media-query-no-invalid": true,
+    "media-type-no-deprecated": true,
+    "named-grid-areas-no-invalid": true,
+    "nesting-selector-no-missing-scoping-root": true,
+    "no-descending-specificity": true,
+    "no-duplicate-at-import-rules": true,
+    "no-duplicate-selectors": true,
+    "no-empty-source": true,
+    "no-invalid-double-slash-comments": true,
+    "no-invalid-position-at-import-rule": true,
+    "no-invalid-position-declaration": true,
+    "no-irregular-whitespace": true,
+    "property-no-deprecated": true,
+    "property-no-unknown": true,
+    "selector-anb-no-unmatchable": true,
+    "selector-pseudo-class-no-unknown": true,
+    "selector-pseudo-element-no-unknown": true,
+    "selector-type-no-unknown": [
+      true,
+      {
+        ignore: ["custom-elements"],
+      },
+    ],
+    "string-no-newline": [true, { ignore: ["at-rule-preludes", "declaration-values"] }],
+    "syntax-string-no-invalid": true,
+  },
+};
+
+// ============================================================================
+// GLOBAL REFERENCES
+// ============================================================================
+
+const stylelint = window.stylelint;
+
+// ============================================================================
+// STATE VARIABLES
+// ============================================================================
+
+let editor: EditorView;
+let currentThemeName: string | null = null;
+let isUserTyping = false;
+let isCustomTheme = false;
+let saveCount = 0;
+let saveTimeout: number;
+let saveCustomThemeTimeout: number;
+
+// ============================================================================
+// DOM ELEMENTS
+// ============================================================================
+
+const modalOverlay = document.getElementById("modal-overlay") as HTMLElement;
+const modalTitle = document.getElementById("modal-title") as HTMLElement;
+const modalMessage = document.getElementById("modal-message") as HTMLElement;
+const modalInput = document.getElementById("modal-input") as HTMLInputElement;
+const modalConfirmBtn = document.getElementById("modal-confirm") as HTMLButtonElement;
+const modalCancelBtn = document.getElementById("modal-cancel") as HTMLButtonElement;
+const modalCloseBtn = document.getElementById("modal-close") as HTMLButtonElement;
+const syncIndicator = document.getElementById("sync-indicator")!;
+const themeNameDisplay = document.getElementById("theme-name-display");
+const themeNameText = document.getElementById("theme-name-text");
+const editThemeBtn = document.getElementById("edit-theme-btn");
+const deleteThemeBtn = document.getElementById("delete-theme-btn");
+const themeSelectorBtn = document.getElementById("theme-selector-btn") as HTMLButtonElement | null;
+const themeModalOverlay = document.getElementById("theme-modal-overlay") as HTMLElement | null;
+const themeModalClose = document.getElementById("theme-modal-close") as HTMLButtonElement | null;
+const themeModalGrid = document.getElementById("theme-modal-grid") as HTMLElement | null;
+
+// ============================================================================
+// MODAL UTILITIES
+// ============================================================================
 
 function showModal(options: ModalOptions): Promise<string | null> {
   return new Promise(resolve => {
@@ -184,17 +292,9 @@ async function showConfirm(title: string, message: string, danger = false, confi
   return result !== null;
 }
 
-// Storage quota limits (in bytes)
-const SYNC_STORAGE_LIMIT = 7000; // Leave some buffer under 8KB limit
-const MAX_RETRY_ATTEMPTS = 3;
-
-import THEMES, {
-  type CustomTheme,
-  deleteCustomTheme,
-  getCustomThemes,
-  renameCustomTheme,
-  saveCustomTheme,
-} from "./themes";
+// ============================================================================
+// UI UTILITIES
+// ============================================================================
 
 const showAlert = (message: string): void => {
   const status = document.getElementById("status-css")!;
@@ -209,6 +309,10 @@ const showAlert = (message: string): void => {
   }, 2000);
 };
 
+// ============================================================================
+// NAVIGATION
+// ============================================================================
+
 const openEditCSS = (): void => {
   const editCSS = document.getElementById("css");
   const options = document.getElementById("options");
@@ -219,8 +323,6 @@ const openEditCSS = (): void => {
     themeContent.style.display = "none";
   }
 };
-
-document.getElementById("edit-css-btn")?.addEventListener("click", openEditCSS);
 
 const openOptions = (): void => {
   const editCSS = document.getElementById("css");
@@ -234,97 +336,66 @@ const openOptions = (): void => {
   }
 };
 
+document.getElementById("edit-css-btn")?.addEventListener("click", openEditCSS);
+document.getElementById("back-btn")?.addEventListener("click", openOptions);
+
 document.addEventListener("keydown", function (e) {
   if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-    e.preventDefault(); // Prevent the browser's default save dialog
+    e.preventDefault();
     saveToStorage();
   }
 });
 
-document.getElementById("back-btn")?.addEventListener("click", openOptions);
-
-const CONFIG = {
-  rules: {
-    // https://github.com/stylelint/stylelint-config-recommended/blob/main/index.js
-    "annotation-no-unknown": true,
-    "at-rule-no-unknown": true,
-    "block-no-empty": true,
-    "color-no-invalid-hex": true,
-    "comment-no-empty": true,
-    "custom-property-no-missing-var-function": true,
-    "declaration-block-no-duplicate-custom-properties": true,
-    "declaration-block-no-duplicate-properties": [
-      true,
-      {
-        ignore: ["consecutive-duplicates-with-different-values"],
-      },
-    ],
-    "declaration-block-no-shorthand-property-overrides": true,
-    "font-family-no-duplicate-names": true,
-    "font-family-no-missing-generic-family-keyword": true,
-    "function-calc-no-unspaced-operator": true,
-    "function-linear-gradient-no-nonstandard-direction": true,
-    "function-no-unknown": true,
-    "keyframe-block-no-duplicate-selectors": true,
-    "keyframe-declaration-no-important": true,
-    "media-feature-name-no-unknown": true,
-    "named-grid-areas-no-invalid": true,
-    "no-descending-specificity": true,
-    "no-duplicate-at-import-rules": true,
-    "no-duplicate-selectors": true,
-    "no-empty-source": true,
-    "no-invalid-double-slash-comments": true,
-    "no-invalid-position-at-import-rule": true,
-    "no-irregular-whitespace": true,
-    "property-no-unknown": true,
-    "selector-pseudo-class-no-unknown": true,
-    "selector-pseudo-element-no-unknown": true,
-    "selector-type-no-unknown": [
-      true,
-      {
-        ignore: ["custom-elements"],
-      },
-    ],
-    "string-no-newline": true,
-    "unit-no-unknown": true,
-  },
-};
+// ============================================================================
+// CSS LINTING
+// ============================================================================
 
 const cssLinter = linter(async view => {
-  let diagnostics: Diagnostic[] = [];
-  const doc = view.state.doc.toString();
+  const diagnostics: Diagnostic[] = [];
+  const code = view.state.doc.toString();
+
+  const getPosition = (line: number, column: number) => {
+    const lines = code.split("\n");
+    let offset = 0;
+    for (let i = 0; i < line - 1; i++) {
+      offset += lines[i].length + 1;
+    }
+    return offset + column - 1;
+  };
 
   try {
-    // @ts-ignore
-    const result = await window.stylelint.lint({
-      code: doc,
-      config: {
-        ...CONFIG,
-      },
-      // Suppress console output from stylelint
+    const result = await stylelint.lint({
+      code,
+      config: stylelintConfig,
     });
 
     if (result.results && result.results.length > 0) {
-      result.results[0].warnings.forEach((warning: any) => {
-        console.log(warning);
+      const warnings = result.results[0].warnings;
+
+      warnings.forEach((warning: any) => {
+        const from = getPosition(warning.line, warning.column);
+        const to = warning.endLine && warning.endColumn ? getPosition(warning.endLine, warning.endColumn) : from + 1;
+
+        const cleanMessage = warning.text.replace(/\s*\([^)]+\)\s*$/, "").trim();
+
         diagnostics.push({
-          from: view.state.doc.line(warning.line).from + warning.column - 1,
-          to:
-            view.state.doc.line(warning.endLine || warning.line).from +
-            warning.column +
-            (warning.endColumn ? warning.endColumn - warning.column : 0) -
-            1,
-          severity: warning.severity as "error" | "warning" | "info",
-          message: warning.text,
+          from: Math.max(0, from),
+          to: Math.max(from + 1, to),
+          severity: warning.severity as "error" | "warning",
+          message: cleanMessage,
         });
       });
     }
   } catch (error) {
-    console.error("Stylelint error:", error);
+    console.error("[BetterLyrics] Stylelint error:", error);
   }
 
   return diagnostics;
 });
+
+// ============================================================================
+// EDITOR INITIALIZATION
+// ============================================================================
 
 function createEditorState(initialContents: string) {
   let extensions = [
@@ -377,17 +448,9 @@ function createEditorView(state: EditorState, parent: Element) {
   return new EditorView({ state, parent });
 }
 
-const syncIndicator = document.getElementById("sync-indicator")!;
-const themeNameDisplay = document.getElementById("theme-name-display");
-const themeNameText = document.getElementById("theme-name-text");
-const editThemeBtn = document.getElementById("edit-theme-btn");
-const deleteThemeBtn = document.getElementById("delete-theme-btn");
-const themeSelectorBtn = document.getElementById("theme-selector-btn") as HTMLButtonElement | null;
-const themeModalOverlay = document.getElementById("theme-modal-overlay") as HTMLElement | null;
-const themeModalClose = document.getElementById("theme-modal-close") as HTMLButtonElement | null;
-const themeModalGrid = document.getElementById("theme-modal-grid") as HTMLElement | null;
-
-let isCustomTheme = false;
+// ============================================================================
+// THEME MANAGEMENT
+// ============================================================================
 
 function showThemeName(themeName: string, custom: boolean = false): void {
   if (themeNameDisplay && themeNameText) {
@@ -395,7 +458,12 @@ function showThemeName(themeName: string, custom: boolean = false): void {
     themeNameDisplay.classList.add("active");
     isCustomTheme = custom;
 
-    console.log("showThemeName called:", { themeName, custom, editThemeBtn, deleteThemeBtn });
+    console.log("showThemeName called:", {
+      themeName,
+      custom,
+      editThemeBtn,
+      deleteThemeBtn,
+    });
 
     if (editThemeBtn) {
       if (custom) {
@@ -447,9 +515,6 @@ function onChange(state: string) {
   debounceSave();
 }
 
-let saveCustomThemeTimeout: number;
-const SAVE_CUSTOM_THEME_DEBOUNCE = 2000;
-
 function debounceSaveCustomTheme() {
   clearTimeout(saveCustomThemeTimeout);
   saveCustomThemeTimeout = window.setTimeout(async () => {
@@ -473,7 +538,10 @@ function debounceSave() {
   saveTimeout = window.setTimeout(saveToStorage, SAVE_DEBOUNCE_DELAY);
 }
 
-// Enhanced storage management
+// ============================================================================
+// STORAGE MANAGEMENT
+// ============================================================================
+
 const getStorageStrategy = (css: string): "local" | "sync" => {
   const cssSize = new Blob([css]).size;
   return cssSize > SYNC_STORAGE_LIMIT ? "local" : "sync";
@@ -483,7 +551,12 @@ const saveToStorageWithFallback = async (
   css: string,
   isTheme = false,
   retryCount = 0
-): Promise<{ success: boolean; strategy?: "local" | "sync"; wasRetry?: boolean; error?: any }> => {
+): Promise<{
+  success: boolean;
+  strategy?: "local" | "sync";
+  wasRetry?: boolean;
+  error?: any;
+}> => {
   try {
     const strategy = getStorageStrategy(css);
 
@@ -621,6 +694,10 @@ async function loadCustomCSS(): Promise<string> {
   }
   return css || "";
 }
+
+// ============================================================================
+// THEME SELECTOR & MODAL
+// ============================================================================
 
 function updateThemeSelectorButton() {
   if (themeSelectorBtn) {
@@ -805,11 +882,17 @@ async function setThemeName() {
   });
 }
 
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOM loaded");
   editor = createEditorView(createEditorState("Loading..."), document.getElementById("editor")!);
   document.getElementById("editor-popout-button")?.addEventListener("click", () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL("pages/standalone-editor.html") });
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("pages/standalone-editor.html"),
+    });
   });
 
   let setSelectedThemePromise = setThemeName();
@@ -925,7 +1008,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   themeNameText?.addEventListener("click", renameTheme);
 });
 
-// Themes
+// ============================================================================
+// FILE OPERATIONS (IMPORT/EXPORT)
+// ============================================================================
 
 const generateDefaultFilename = (): string => {
   const date = new Date();
@@ -1046,10 +1131,14 @@ document.getElementById("file-export-btn")!.addEventListener("click", () => {
   saveCSSToFile(css, defaultFilename);
 });
 
+// ============================================================================
+// STORAGE CHANGE LISTENERS
+// ============================================================================
+
 chrome.storage.onChanged.addListener(async (changes, namespace) => {
   console.log("storage", changes, namespace);
   if (Object.hasOwn(changes, "customCSS")) {
-    if (saveCount == 0) {
+    if (saveCount === 0) {
       await loadCustomCSS().then(result => {
         console.log("Got a CSS Update");
         editor.setState(createEditorState(result));
