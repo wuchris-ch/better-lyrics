@@ -6,8 +6,8 @@ import * as Translation from "@modules/lyrics/translation";
 import { containsNonLatin, testRtl } from "@modules/lyrics/lyricParseUtils";
 import { AppState } from "@/index";
 import type { LyricSourceResultWithMeta } from "@modules/lyrics/lyrics";
-import type {Lyric, LyricPart} from "@modules/lyrics/providers/shared";
-import type {TranslationResult} from "@modules/lyrics/translation";
+import type { Lyric, LyricPart } from "@modules/lyrics/providers/shared";
+import type { TranslationResult } from "@modules/lyrics/translation";
 
 export interface PartData {
   time: number;
@@ -180,7 +180,6 @@ export function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible 
   let syncType: SyncType = "synced";
 
   lyrics.forEach((lyricItem, lineIndex) => {
-
     if (!lyricItem.parts) {
       lyricItem.parts = [];
     }
@@ -246,8 +245,10 @@ export function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible 
 
     let romanizedCacheResult = Translation.getRomanizationFromCache(item.words);
     // Language should always exist if item.timedRomanization exists
-    const shouldRomanize = (data.language && Constants.romanizationLanguages.includes(data.language)) || containsNonLatin(item.words)
-    const canInjectRomanizationsEarly = (shouldRomanize && item.timedRomanization && item.timedRomanization.length > 0) || romanizedCacheResult !== null;
+    const shouldRomanize =
+      (data.language && Constants.romanizationLanguages.includes(data.language)) || containsNonLatin(item.words);
+    const canInjectRomanizationsEarly =
+      (shouldRomanize && item.timedRomanization && item.timedRomanization.length > 0) || romanizedCacheResult !== null;
 
     if (canInjectRomanizationsEarly) {
       createBreakElem(lyricElement, 4);
@@ -256,7 +257,7 @@ export function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible 
       romanizedLine.classList.add(Constants.ROMANIZED_LYRICS_CLASS);
 
       if (item.timedRomanization && item.timedRomanization.length > 0) {
-        createLyricsLine(item.timedRomanization, line, romanizedLine)
+        createLyricsLine(item.timedRomanization, line, romanizedLine);
       } else {
         romanizedLine.textContent = "\n" + romanizedCacheResult;
       }
@@ -275,7 +276,6 @@ export function injectLyrics(data: LyricSourceResultWithMeta, keepLoaderVisible 
     } else {
       translationResult = Translation.getTranslationFromCache(item.words, Translation.getCurrentTranslationLanguage());
     }
-
 
     if (translationResult) {
       createBreakElem(lyricElement, 6);
@@ -440,7 +440,6 @@ function groupByWordAndInsert(lyricElement: HTMLDivElement, lyricElementsBuffer:
     }
   };
 
-
   lyricElementsBuffer.forEach(part => {
     const isNonMatchingType = isCurrentBufferBg !== part.classList.contains(BACKGROUND_LYRIC_CLASS);
 
@@ -459,7 +458,7 @@ function groupByWordAndInsert(lyricElement: HTMLDivElement, lyricElementsBuffer:
     //
     // We do this to prevent phantom spaces
     // from appearing at the beginning of the word when the bg lyrics are at the start of a line
-    
+
     if (isNonMatchingType && isElmJustSpace) {
       wordGroupBuffer.push(part);
       isCurrentBufferBg = part.classList.contains(BACKGROUND_LYRIC_CLASS);
