@@ -2,7 +2,7 @@ import * as Constants from "@constants";
 import * as Utils from "@utils";
 import * as Storage from "@core/storage";
 
-interface TranslationResult {
+export interface TranslationResult {
   originalLanguage: string;
   translatedText: string;
 }
