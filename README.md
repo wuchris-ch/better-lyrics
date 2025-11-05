@@ -278,6 +278,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://gustavostz.com/"><img src="https://avatars.githubusercontent.com/u/48111506?v=4?s=100" width="100px;" alt="Gustavo Steinmetz"/><br /><sub><b>Gustavo Steinmetz</b></sub></a><br /><a href="https://github.com/better-lyrics/better-lyrics/commits?author=gustavostz" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://aircraft192.de/"><img src="https://avatars.githubusercontent.com/u/92523442?v=4?s=100" width="100px;" alt="Aircraft192"/><br /><sub><b>Aircraft192</b></sub></a><br /><a href="https://github.com/better-lyrics/better-lyrics/commits?author=Aircraft192" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ramansg"><img src="https://avatars.githubusercontent.com/u/19746632?v=4?s=100" width="100px;" alt="ramansg"/><br /><sub><b>ramansg</b></sub></a><br /><a href="#plugin-ramansg" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
