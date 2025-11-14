@@ -68,6 +68,12 @@ const themes: Theme[] = [
     link: "",
     path: "Luxurious Glass.css",
   },
+  {
+    name: "Dynamic Background",
+    author: "chengg",
+    link: "https://github.com/chengggit/Youtube-Music-Dynamic-Theme",
+    path: "Dynamic Background.css",
+  },
 ];
 
 export async function getCustomThemes(): Promise<CustomTheme[]> {
