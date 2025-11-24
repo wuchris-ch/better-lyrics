@@ -1,4 +1,5 @@
 import type { EditorView } from "@codemirror/view";
+import { EditorSelection } from "@codemirror/state";
 import { createEditorState } from "./editor";
 
 type OperationType = "import" | "theme" | "storage" | "init";
@@ -152,8 +153,21 @@ export class EditorStateManager {
 
     console.log(`[EditorStateManager] Setting editor content from: ${source} (${css.length} bytes)`);
 
+    const currentSelection = this.editor.state.selection;
+    const currentAnchor = currentSelection.main.anchor;
+    const currentHead = currentSelection.main.head;
+
     const newState = createEditorState(css);
+    const maxPos = newState.doc.length;
+
+    const clampedAnchor = Math.min(currentAnchor, maxPos);
+    const clampedHead = Math.min(currentHead, maxPos);
+
     this.editor.setState(newState);
+
+    this.editor.dispatch({
+      selection: EditorSelection.create([EditorSelection.range(clampedAnchor, clampedHead)]),
+    });
 
     console.log(`[EditorStateManager] Editor content set successfully from: ${source}`);
   }
