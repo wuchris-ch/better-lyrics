@@ -1,0 +1,54 @@
+name: Claude Auto Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  review:
+    if: |
+      github.actor != 'dependabot[bot]' &&
+      github.actor != 'renovate[bot]' &&
+      github.actor != 'allcontributors[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request:
+
+            ## Update PR Description
+            Use `gh pr edit ${{ github.event.pull_request.number }} --body "..."` to set the PR description with:
+            - A clear 2-3 sentence summary
+            - A thorough description covering all relevant changes (concise but comprehensive, no arbitrary length limits)
+
+            ## Code Review
+            Then review the code for:
+            - Code quality and best practices
+            - Potential bugs or edge cases
+            - Security concerns
+            - Performance implications
+
+            ## Guidelines
+            - Be constructive, not nitpicky
+            - Praise good patterns you see
+            - Suggest improvements, don't just criticize
+            - If the PR looks good, say so!
+
+            Use `gh pr comment` for review feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` for specific line comments.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr edit:*)"
