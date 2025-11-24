@@ -1,0 +1,34 @@
+name: Claude Auto Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Please review this pull request:
+            1. Write a clear summary of what this PR does
+            2. Review for code quality and best practices
+            3. Flag any bugs, security issues, or performance concerns
+
+            Use `gh pr comment` for the summary/top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` for specific code issues.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*)"
