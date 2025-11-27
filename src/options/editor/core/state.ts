@@ -61,6 +61,11 @@ export class EditorStateManager {
     return this.saveCount;
   }
 
+  resetSaveCount(): void {
+    this.saveCount = 0;
+    console.log("[EditorStateManager] Save count reset to 0");
+  }
+
   getIsUserTyping(): boolean {
     return this.isUserTyping;
   }

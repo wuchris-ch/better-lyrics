@@ -105,6 +105,7 @@ export class ThemeManager {
       await sendUpdateMessage(css, result.strategy);
     } finally {
       editorStateManager.setIsSaving(false);
+      editorStateManager.resetSaveCount();
     }
   }
 }
@@ -233,6 +234,7 @@ export function saveToStorage(isTheme = false) {
     .finally(() => {
       editorStateManager.setIsSaving(false);
       editorStateManager.setIsUserTyping(false);
+      editorStateManager.resetSaveCount();
     });
 }
 

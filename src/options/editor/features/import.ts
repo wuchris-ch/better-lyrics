@@ -136,6 +136,7 @@ export class ImportManager {
         showAlert(`CSS file "${filename}" imported successfully!`);
       } finally {
         editorStateManager.setIsSaving(false);
+        editorStateManager.resetSaveCount();
       }
     });
   }

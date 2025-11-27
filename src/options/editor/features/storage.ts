@@ -390,8 +390,19 @@ export class StorageManager {
   }
 
   private async handleThemeNameChange(): Promise<void> {
-    console.log("[StorageManager] Theme name changed");
+    if (editorStateManager.getIsSaving()) {
+      console.log("[StorageManager] Skipping theme reload (save in progress)");
+      return;
+    }
+
+    console.log("[StorageManager] Theme name changed, reloading CSS");
     await setThemeName();
+
+    await editorStateManager.queueOperation("storage", async () => {
+      const css = await loadCustomCSS();
+      console.log(`[StorageManager] CSS loaded from theme change: ${css.length} bytes`);
+      await editorStateManager.setEditorContent(css, "theme-name-change");
+    });
   }
 
   async loadInitialCSS(): Promise<void> {
