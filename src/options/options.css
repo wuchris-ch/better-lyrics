@@ -834,6 +834,15 @@ hr {
 	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
 }
 
+input.cm-textfield{
+	transition: border 0.15s;
+}
+
+input.cm-textfield:focus-visible {
+    outline: none;
+    border: 1px solid #888;
+}
+
 .cm-panel.cm-search input[type="text"]::placeholder {
 	color: rgba(255, 255, 255, 0.35);
 }
