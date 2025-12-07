@@ -334,7 +334,7 @@
 }
 
 #blyrics-loader:not([no-sync-available]):after {
-	animation: shimmer 3s linear infinite;
+	animation: blyrics-shimmer 3s linear infinite;
 }
 
 #blyrics-loader[small-loader][active] {
