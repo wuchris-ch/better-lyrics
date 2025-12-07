@@ -16,6 +16,7 @@
 		- [Gradient Stops](#gradient-stops)
 		- [Dynamic Properties](#dynamic-properties)
 	- [4. Styling the Main Lyrics Container](#4-styling-the-main-lyrics-container)
+		- [Container Data Attributes](#container-data-attributes)
 	- [5. Styling Individual Lyric Lines](#5-styling-individual-lyric-lines)
 		- [Base Structure](#base-structure)
 		- [Base Styling for Each Lyric](#base-styling-for-each-lyric)
@@ -218,10 +219,10 @@ This sets the overall appearance of the lyrics container, including typography, 
 
 The `.blyrics-container` element has two data attributes that indicate its current state:
 
-| Attribute             | Values                             | Description                                                      |
-| --------------------- | ---------------------------------- | ---------------------------------------------------------------- |
-| `data-sync`           | `"richsync"`, `"synced"`, `"none"` | Indicates the synchronization type of the current lyrics         |
-| `data-loader-visible` | `"true"`, `"false"`                | Indicates whether the loading spinner is currently visible       |
+| Attribute             | Values                             | Description                                                |
+| --------------------- | ---------------------------------- | ---------------------------------------------------------- |
+| `data-sync`           | `"richsync"`, `"synced"`, `"none"` | Indicates the synchronization type of the current lyrics   |
+| `data-loader-visible` | `"true"`, `"false"`                | Indicates whether the loading spinner is currently visible |
 
 #### Sync Type Styling
 
@@ -490,15 +491,12 @@ The CSS defines several keyframe animations:
   }
 }
 
-@keyframes blyrics-pulse {
+@keyframes blyrics-shimmer {
   0% {
-    opacity: 0.33;
+    background-position: 200% 0;
   }
-  50% {
-    opacity: 0.5;
-  }
-  to {
-    opacity: 0.33;
+  100% {
+    background-position: -200% 0;
   }
 }
 ```
@@ -507,7 +505,7 @@ These animations create:
 - **blyrics-wobble**: Subtle horizontal movement and scale for active lyrics (includes `scaleX(1.025)` for emphasis)
 - **blyrics-glow**: Drop shadow glow effect that fades out (uses `filter: drop-shadow` for better compatibility with `background-clip: text`)
 - **blyrics-spin**: Rotating animation for the loading spinner
-- **blyrics-pulse**: Pulsing opacity for loading text
+- **blyrics-shimmer**: Shimmer animation for loading text
 
 ## 7. Modifying YouTube Music's Layout
 
@@ -585,15 +583,22 @@ Ensures the lyrics panel has adequate space for comfortable reading. The `33em` 
 }
 
 #blyrics-loader:after {
-  animation: blyrics-pulse 1.5s infinite;
-  color: var(--blyrics-ui-text-color);
+  background: linear-gradient(
+        110deg,
+        color-mix(in srgb, var(--blyrics-ui-text-color) 50%, transparent) 30%,
+        var(--blyrics-ui-text-color) 50%,
+        color-mix(in srgb, var(--blyrics-ui-text-color) 50%, transparent) 70%
+    );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   content: "Better Lyrics is searching for lyrics...";
   font-family: var(--blyrics-font-family);
   font-size: 2rem;
   font-weight: 700;
   isolation: isolate;
-  line-height: 1;
-  opacity: 0.33;
+  line-height: 1.5;
   white-space: pre;
   z-index: 1;
 }
