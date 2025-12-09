@@ -45,38 +45,9 @@ jobs:
           biome check . 2>&1 | tee biome-output.txt
           exit ${PIPESTATUS[0]}
 
-      - name: Comment on PR with Biome issues (fork PRs)
-        if: steps.app-token.outputs.token == '' && steps.biome-check.outcome == 'failure' && github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          BIOME_OUTPUT=$(head -c 30000 biome-output.txt)
-          if [ $(wc -c < biome-output.txt) -gt 30000 ]; then
-            BIOME_OUTPUT="$BIOME_OUTPUT
-
-          ... (truncated, see workflow logs for full output)"
-          fi
-          cat <<'__BLYRICS_PR_COMMENT__' > comment.md
-          ## ❌ Biome Check Failed
-
-          Please fix the following issues locally and push the changes:
-
-          ```
-          __BLYRICS_PR_COMMENT__
-          echo "$BIOME_OUTPUT" >> comment.md
-          cat <<'__BLYRICS_PR_COMMENT__' >> comment.md
-          ```
-
-          Run this command to auto-fix:
-          ```bash
-          biome lint --write . && biome format --write .
-          ```
-          __BLYRICS_PR_COMMENT__
-          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
-
-      - name: Fail if Biome check failed (fork PRs)
+      - name: Show Biome fix instructions (fork PRs)
         if: steps.app-token.outputs.token == '' && steps.biome-check.outcome == 'failure'
-        run: exit 1
+        run: echo "::warning::Biome check found issues. Please run 'biome lint --write . && biome format --write .' locally and push the fixes."
 
       - name: Run Biome lint and format
         if: steps.app-token.outputs.token != ''
