@@ -16,6 +16,7 @@ jobs:
     steps:
       - name: Generate GitHub App Token
         id: app-token
+        continue-on-error: true
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.APP_ID }}
@@ -24,8 +25,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ steps.app-token.outputs.token }}
+          token: ${{ steps.app-token.outputs.token || github.token }}
           fetch-depth: 0
+          ref: ${{ github.head_ref || github.ref }}
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -33,44 +35,61 @@ jobs:
           node-version: "20.x"
 
       - name: Install Biome
-        run: npm install -g @biomejs/biome
+        run: npm install -g @biomejs/biome@2.0.4
+
+      - name: Run Biome check (fork PRs)
+        id: biome-check
+        if: steps.app-token.outputs.token == ''
+        continue-on-error: true
+        run: |
+          biome check . 2>&1 | tee biome-output.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Comment on PR with Biome issues (fork PRs)
+        if: steps.app-token.outputs.token == '' && steps.biome-check.outcome == 'failure' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BIOME_OUTPUT=$(head -c 30000 biome-output.txt)
+          if [ $(wc -c < biome-output.txt) -gt 30000 ]; then
+            BIOME_OUTPUT="$BIOME_OUTPUT
+
+          ... (truncated, see workflow logs for full output)"
+          fi
+          cat <<'__BLYRICS_PR_COMMENT__' > comment.md
+          ## ❌ Biome Check Failed
+
+          Please fix the following issues locally and push the changes:
+
+          ```
+          __BLYRICS_PR_COMMENT__
+          echo "$BIOME_OUTPUT" >> comment.md
+          cat <<'__BLYRICS_PR_COMMENT__' >> comment.md
+          ```
+
+          Run this command to auto-fix:
+          ```bash
+          biome lint --write . && biome format --write .
+          ```
+          __BLYRICS_PR_COMMENT__
+          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+
+      - name: Fail if Biome check failed (fork PRs)
+        if: steps.app-token.outputs.token == '' && steps.biome-check.outcome == 'failure'
+        run: exit 1
 
       - name: Run Biome lint and format
+        if: steps.app-token.outputs.token != ''
         run: |
           biome lint --write .
           biome format --write .
 
-      - name: Check for changes and commit
+      - name: Commit and push changes
+        if: steps.app-token.outputs.token != ''
+        uses: planetscale/ghcommit-action@v0.2.19
+        with:
+          commit_message: "Auto-fix: Apply Biome lint and format fixes"
+          repo: ${{ github.repository }}
+          branch: ${{ github.head_ref || github.ref_name }}
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-
-            AUTO_FIX_MSG="Auto-fix: Apply Biome lint and format fixes"
-            LAST_COMMIT_MSG=$(git log -1 --pretty=%s || true)
-
-            if [ "$LAST_COMMIT_MSG" = "$AUTO_FIX_MSG" ]; then
-              echo "❌ ERROR: Potential auto-fix loop detected!"
-              echo "The previous commit was an auto-fix, but this run *still* found Biome issues."
-              echo "This means the auto-fix is not succeeding in one pass."
-              echo "Failing the job to prevent an infinite commit loop."
-              echo "Please review the Biome output and fix the remaining issues manually."
-              exit 1
-            fi
-
-            echo "✅ Found Biome issues. Proceeding with auto-fix commit."
-            git config --local user.name "better-lyrics-harmonizer[bot]"
-            # https://github.com/orgs/community/discussions/24664#discussioncomment-3880274
-            git config --local user.email "248079304+better-lyrics-harmonizer[bot]@users.noreply.github.com"
-            git add .
-            git commit -m "$AUTO_FIX_MSG"
-
-            if git symbolic-ref HEAD >/dev/null 2>&1; then
-              git push
-              echo "✅ Auto-fixed Biome issues and pushed changes."
-            else
-              echo "✅ Auto-fixed Biome issues (detached HEAD - changes committed locally)"
-            fi
-          else
-            echo "✅ No Biome issues found - skipping commit"
-          fi
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
