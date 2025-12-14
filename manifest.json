@@ -29,7 +29,7 @@
         "*://music.youtube.com/*"
       ],
       "resources": [
-        "css/blyrics.css",
+				"css/blyrics.css",
         "css/ytmusic.css",
         "css/disablestylizedanimations.css",
         "css/themesong.css",
