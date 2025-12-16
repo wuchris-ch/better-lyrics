@@ -15,7 +15,7 @@ Better Lyrics upgrades your YouTube Music experience by providing beautiful time
  <a aria-label="Better Stack Badge" href="https://better-lyrics-status.boidu.dev"><img height="20" src="https://uptime.betterstack.com/status-badges/v2/monitor/1dqoz.svg" alt="Better Stack Badge" /></a>
 
  <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-<img src="https://img.shields.io/badge/all_contributors-11-orange.svg" alt=""/>
+<img src="https://img.shields.io/badge/all_contributors-12-orange.svg" alt=""/>
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 </p>
 
@@ -282,6 +282,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://aircraft192.de/"><img src="https://avatars.githubusercontent.com/u/92523442?v=4?s=100" width="100px;" alt="Aircraft192"/><br /><sub><b>Aircraft192</b></sub></a><br /><a href="https://github.com/better-lyrics/better-lyrics/commits?author=Aircraft192" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ramansg"><img src="https://avatars.githubusercontent.com/u/19746632?v=4?s=100" width="100px;" alt="ramansg"/><br /><sub><b>ramansg</b></sub></a><br /><a href="#plugin-ramansg" title="Plugin/utility libraries">🔌</a> <a href="https://github.com/better-lyrics/better-lyrics/commits?author=ramansg" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/The-Developer-Nate"><img src="https://avatars.githubusercontent.com/u/67196220?v=4?s=100" width="100px;" alt="TheDevNate"/><br /><sub><b>TheDevNate</b></sub></a><br /><a href="https://github.com/better-lyrics/better-lyrics/commits?author=The-Developer-Nate" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://github.com/mukeenanyafiq"><img src="https://avatars.githubusercontent.com/u/93072673?v=4?s=100" width="100px;" alt="Keenan Yafiq"/><br /><sub><b>Keenan Yafiq</b></sub></a><br /><a href="https://github.com/better-lyrics/better-lyrics/commits?author=mukeenanyafiq" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
