@@ -659,20 +659,22 @@ hr {
     margin-block-end: 0;
     align-self: end;
     padding-inline-start: 0;
+		width: 100%;
 }
 
 .sortable-item {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 0.675rem 0.375rem;
+    padding: 0.675rem 0.5rem;
     border-radius: 0.5rem;
     cursor: grab;
     display: flex;
     align-items: center;
-    justify-content: left;
+    gap: 0.5rem;
     font-size: 0.875rem;
     font-weight: bold;
-    width: 20em;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .sortable-item:active {
@@ -705,20 +707,25 @@ hr {
 
 .sortable-item > label {
     transform: translateY(-0.05rem);
-    margin-left: 0.5rem;
     padding: 0;
     font-size: 0.875rem;
     font-weight: bold;
-    flex-grow: 1;
     display: flex;
     align-items: center;
-    justify-content: left;
     gap: 0.5rem;
 }
 
-.disabled-item {
-    color: rgba(255, 255, 255, 0.5);
-    cursor: not-allowed;
+.sortable-item.disabled-item {
+	color: rgba(255, 255, 255, 0.5);
+}
+
+.sortable-item.disabled-item .sync-tag {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.sortable-item.disabled-item .sync-tag::after {
+	display: none;
 }
 
 .checkbox-container {
@@ -773,6 +780,89 @@ hr {
     margin-left: calc(36px + 0.5rem);
     font-size: 0.875rem;
     font-weight: bold;
+}
+
+.sync-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	padding: 0.125rem 0.375rem;
+	border-radius: 0.25rem;
+	text-transform: uppercase;
+	flex-shrink: 0;
+	margin-left: auto;
+	position: relative;
+	cursor: help;
+	box-shadow: rgba(0, 0, 0, 0.05) 0px 8px 8px -3px, rgba(0, 0, 0, 0.0375) 0px 4px 6px -2px, inset rgba(255, 255, 255, 0.1) 0px 1px 0px 0px;
+}
+
+.sync-tag span {
+	font-size: 0.5rem;
+	margin-top: 1px;
+	letter-spacing: 0.04em;
+	font-weight: 600;
+}
+
+.sync-tag svg {
+	width: 0.75rem;
+	height: 0.75rem;
+	flex-shrink: 0;
+}
+
+.sync-tag--syllable {
+	color: #fcd34d;
+	background: rgba(252, 211, 77, 0.15);
+}
+
+.sync-tag--word {
+	color: #93c5fd;
+	background: rgba(96, 165, 250, 0.15);
+}
+
+.sync-tag--line {
+	color: #86efac;
+	background: rgba(74, 222, 128, 0.15);
+}
+
+.sync-tag--unsynced {
+	color: rgba(255, 255, 255, 0.5);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.sync-tag::after {
+	--ease: ease-out;
+	content: attr(data-tooltip);
+	position: absolute;
+	bottom: calc(100% + 8px);
+	right: 0;
+	transform: translateY(4px);
+	padding: 6px 10px;
+	background-color: hsl(0, 0%, 20%);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: #fff;
+	font-size: 0.75rem;
+	font-weight: 500;
+	border-radius: 6px;
+	pointer-events: none;
+	opacity: 0;
+	visibility: hidden;
+	max-width: 20em;
+	width: max-content;
+	transition:
+		opacity 0.15s var(--ease),
+		visibility 0.15s var(--ease),
+		transform 0.15s var(--ease);
+	transition-delay: 0s;
+	z-index: 100;
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+.sync-tag:hover::after {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+	transition-delay: 0.2s;
 }
 
 .cm-editor {
