@@ -231,8 +231,7 @@ export function setupHomepageFullscreenHandler(): void {
       }
 
       const target = event.target as HTMLElement;
-      const isTypingInInput =
-        target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+      const isTypingInInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
 
       if (isTypingInInput) {
         return;
