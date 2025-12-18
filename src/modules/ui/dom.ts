@@ -148,6 +148,9 @@ let loaderMayBeActive = false;
  * Renders and displays the loading spinner for lyrics fetching.
  */
 export function renderLoader(small = false): void {
+  if (isAdPlaying()) {
+    return;
+  }
   if (!small) {
     cleanup();
   }
@@ -246,6 +249,84 @@ export function isLoaderActive(): boolean {
     Utils.log(err);
   }
   return false;
+}
+
+/**
+ * Checks if an advertisement is currently playing.
+ *
+ * @returns True if an ad is playing
+ */
+export function isAdPlaying(): boolean {
+  const playerBar = document.querySelector(Constants.PLAYER_BAR_SELECTOR);
+  return playerBar?.hasAttribute(Constants.AD_PLAYING_ATTR) ?? false;
+}
+
+/**
+ * Sets up a MutationObserver to watch for advertisement state changes.
+ */
+export function setupAdObserver(): void {
+  const playerBar = document.querySelector(Constants.PLAYER_BAR_SELECTOR);
+  const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR) as HTMLElement;
+
+  if (!playerBar || !tabRenderer) {
+    setTimeout(setupAdObserver, 1000);
+    return;
+  }
+
+  let adOverlay = document.getElementById(Constants.LYRICS_AD_OVERLAY_ID);
+  if (!adOverlay) {
+    adOverlay = document.createElement("div");
+    adOverlay.id = Constants.LYRICS_AD_OVERLAY_ID;
+    tabRenderer.prepend(adOverlay);
+  }
+
+  if (isAdPlaying()) {
+    showAdOverlay();
+  }
+
+  const observer = new MutationObserver(() => {
+    if (isAdPlaying()) {
+      showAdOverlay();
+    } else {
+      hideAdOverlay();
+    }
+  });
+
+  observer.observe(playerBar, { attributes: true, attributeFilter: [Constants.AD_PLAYING_ATTR] });
+}
+
+/**
+ * Shows the advertisement overlay on the lyrics panel.
+ */
+export function showAdOverlay(): void {
+  const tabRenderer = document.querySelector(Constants.TAB_RENDERER_SELECTOR) as HTMLElement;
+  if (!tabRenderer) {
+    return;
+  }
+
+  const loader = document.getElementById(Constants.LYRICS_LOADER_ID);
+  if (loader) {
+    loader.removeAttribute("active");
+  }
+
+  let adOverlay = document.getElementById(Constants.LYRICS_AD_OVERLAY_ID);
+  if (!adOverlay) {
+    adOverlay = document.createElement("div");
+    adOverlay.id = Constants.LYRICS_AD_OVERLAY_ID;
+    tabRenderer.prepend(adOverlay);
+  }
+
+  adOverlay.setAttribute("active", "");
+}
+
+/**
+ * Hides the advertisement overlay from the lyrics panel.
+ */
+export function hideAdOverlay(): void {
+  const adOverlay = document.getElementById(Constants.LYRICS_AD_OVERLAY_ID);
+  if (adOverlay) {
+    adOverlay.removeAttribute("active");
+  }
 }
 
 /**

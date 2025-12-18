@@ -24,6 +24,7 @@ export const SONG_IMAGE_SELECTOR: string = "#song-image>#thumbnail>#img";
 export const TAB_RENDERER_SELECTOR: string = "#tab-renderer";
 export const NO_LYRICS_TEXT_SELECTOR: string =
   "#tab-renderer > ytmusic-message-renderer > yt-formatted-string.text.style-scope.ytmusic-message-renderer";
+export const FULLSCREEN_BUTTON_SELECTOR: string = ".fullscreen-button";
 
 // DOM IDs and Attributes
 export const LYRICS_LOADER_ID: string = "blyrics-loader";
@@ -163,3 +164,7 @@ export const NO_LYRICS_TEXT: string = "No lyrics found for this song";
 export const MUSIC_NOTES: string = "♪𝅘𝅥𝅮𝅘𝅥𝅯𝅘𝅥𝅰𝅘𝅥𝅱𝅘𝅥𝅲";
 
 export const DEFAULT_LINE_SYNCED_WORD_DELAY_MS = 50;
+
+export const PLAYER_BAR_SELECTOR: string = "ytmusic-player-bar";
+export const AD_PLAYING_ATTR: string = "is-advertisement";
+export const LYRICS_AD_OVERLAY_ID: string = "blyrics-ad-overlay";

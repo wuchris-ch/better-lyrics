@@ -84,7 +84,9 @@ export let AppState: AppState = {
 export async function modify(): Promise<void> {
   Utils.setUpLog();
   await DOM.injectHeadTags();
+  DOM.setupAdObserver();
   Observer.enableLyricsTab();
+  Observer.setupHomepageFullscreenHandler();
   Settings.hideCursorOnIdle();
   Settings.handleSettings();
   Settings.loadTranslationSettings();
